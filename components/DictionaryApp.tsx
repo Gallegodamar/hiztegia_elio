@@ -8,6 +8,7 @@ import {
   deleteFavoriteById,
   fetchFavoritesByUsername,
   insertFavoriteByUsername,
+  lookupDictionaryMeaning,
   searchDictionaryMeanings,
   signInWithRegisteredUser,
   signOutRegisteredUser,
@@ -42,6 +43,16 @@ const buildMeaningFallbackUrl = (term: string): string =>
 
 const isTermReady = (value: string): boolean =>
   value.trim().replace(/\*/g, '').length >= 1;
+
+type MeaningFlyout = {
+  term: string;
+  meaning: string | null;
+  fallbackUrl: string;
+  loading: boolean;
+  width: number;
+  left: number;
+  top: number;
+};
 
 const ScreenHeader: React.FC<{ title: string }> = ({
   title,
@@ -223,7 +234,7 @@ const SynonymSearchResults: React.FC<{
   isSavedToday: (word: string) => boolean;
   isSavingWord: (word: string) => boolean;
   onSave: (row: SearchResultItem) => void;
-  onOpenMeaning: (term: string) => void;
+  onOpenMeaning: (term: string, anchorEl: HTMLElement) => void;
 }> = ({
   searchTerm,
   isSearching,
@@ -299,9 +310,14 @@ const SynonymSearchResults: React.FC<{
           <article key={`${row.id}-${index}`} className="surface-card p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="font-display text-[1.7rem] font-semibold text-slate-900">
+                <button
+                  type="button"
+                  onClick={(event) => onOpenMeaning(row.hitza, event.currentTarget)}
+                  className="font-display border-0 bg-transparent p-0 text-[1.7rem] font-semibold text-left text-slate-900 transition hover:text-teal-700"
+                  title="Esanahia ikusi"
+                >
                   {row.hitza}
-                </h3>
+                </button>
                 <span
                   className={
                     'mt-2 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
@@ -331,7 +347,7 @@ const SynonymSearchResults: React.FC<{
                 <button
                   key={`${row.id}-${synonym}-${synonymIndex}`}
                   type="button"
-                  onClick={() => onOpenMeaning(synonym)}
+                  onClick={(event) => onOpenMeaning(synonym, event.currentTarget)}
                   className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700"
                   title="Esanahia ikusi"
                 >
@@ -726,6 +742,9 @@ export const DictionaryApp: React.FC = () => {
   const [isMeaningLoading, setIsMeaningLoading] = useState(false);
   const [meaningFallbackUrl, setMeaningFallbackUrl] = useState<string | null>(null);
   const meaningRequestRef = useRef(0);
+  const [meaningFlyout, setMeaningFlyout] = useState<MeaningFlyout | null>(null);
+  const meaningFlyoutRef = useRef<HTMLDivElement | null>(null);
+  const meaningFlyoutRequestRef = useRef(0);
 
   const [favoritesByDate, setFavoritesByDate] = useState<FavoritesByDate>({});
   const [isFavoritesLoading, setIsFavoritesLoading] = useState(false);
@@ -835,6 +854,34 @@ export const DictionaryApp: React.FC = () => {
       setActiveView('dictionary');
     }
   }, [activeView, isAdminUser]);
+
+  useEffect(() => {
+    setMeaningFlyout(null);
+    meaningFlyoutRequestRef.current += 1;
+  }, [activeView, searchMode, searchTerm]);
+
+  useEffect(() => {
+    if (!meaningFlyout) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (meaningFlyoutRef.current?.contains(target)) return;
+      setMeaningFlyout(null);
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMeaningFlyout(null);
+    };
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [meaningFlyout]);
 
   useEffect(() => {
     if (searchMode === 'synonyms') {
@@ -964,6 +1011,8 @@ export const DictionaryApp: React.FC = () => {
     setMeaningRows([]);
     setMeaningPage(1);
     setMeaningFallbackUrl(null);
+    setMeaningFlyout(null);
+    meaningFlyoutRequestRef.current += 1;
     setFavoritesByDate({});
     setFavoritesError(null);
     setIsFavoritesLoading(false);
@@ -1040,6 +1089,51 @@ export const DictionaryApp: React.FC = () => {
       setNotice(`"${word}" gogokoetan gorde da.`);
     },
     [favoritesByDate, username]
+  );
+
+  const openMeaningFlyout = useCallback(
+    (term: string, anchorEl: HTMLElement) => {
+      const normalized = term.trim();
+      if (!normalized) return;
+
+      const rect = anchorEl.getBoundingClientRect();
+      const sideMargin = 12;
+      const flyoutWidth = Math.min(320, window.innerWidth - sideMargin * 2);
+      const maxLeft = window.innerWidth - flyoutWidth - sideMargin;
+      const left = Math.min(Math.max(rect.left, sideMargin), Math.max(sideMargin, maxLeft));
+      const top = Math.min(rect.bottom + 6, window.innerHeight - 56);
+
+      const fallbackUrl = buildMeaningFallbackUrl(normalized);
+      const requestId = ++meaningFlyoutRequestRef.current;
+
+      setMeaningFlyout({
+        term: normalized,
+        meaning: null,
+        fallbackUrl,
+        loading: true,
+        width: flyoutWidth,
+        left,
+        top,
+      });
+
+      void (async () => {
+        try {
+          const match = await lookupDictionaryMeaning(normalized);
+          if (requestId !== meaningFlyoutRequestRef.current) return;
+          setMeaningFlyout((current) =>
+            current
+              ? { ...current, loading: false, meaning: match?.esanahia ?? null }
+              : current
+          );
+        } catch {
+          if (requestId !== meaningFlyoutRequestRef.current) return;
+          setMeaningFlyout((current) =>
+            current ? { ...current, loading: false, meaning: null } : current
+          );
+        }
+      })();
+    },
+    []
   );
 
   const onStudyWord = useCallback((word: string, mode: SearchMode) => {
@@ -1211,10 +1305,7 @@ export const DictionaryApp: React.FC = () => {
               isSavedToday={isSavedToday}
               isSavingWord={isSavingWord}
               onSave={onSaveSynonymRow}
-              onOpenMeaning={(term) => {
-                setSearchMode('meaning');
-                setSearchTerm(term);
-              }}
+              onOpenMeaning={openMeaningFlyout}
             />
           ) : (
             <MeaningSearchResults
@@ -1262,6 +1353,49 @@ export const DictionaryApp: React.FC = () => {
           }}
           onSubmit={onSubmitNewSynonym}
         />
+      ) : null}
+
+      {meaningFlyout ? (
+        <section
+          ref={meaningFlyoutRef}
+          className="dictionary-flyout"
+          style={{
+            left: `${meaningFlyout.left}px`,
+            top: `${meaningFlyout.top}px`,
+            width: `${meaningFlyout.width}px`,
+          }}
+        >
+          <div className="dictionary-flyout__header">
+            <strong className="font-display text-base text-slate-900">
+              {meaningFlyout.term}
+            </strong>
+            <button
+              type="button"
+              className="dictionary-flyout__close"
+              onClick={() => setMeaningFlyout(null)}
+              aria-label="Itxi"
+            >
+              x
+            </button>
+          </div>
+
+          <div className="dictionary-flyout__body">
+            {meaningFlyout.loading
+              ? 'Esanahia bilatzen...'
+              : meaningFlyout.meaning ?? 'Ez da tokiko hiztegian esanahirik aurkitu.'}
+          </div>
+
+          {!meaningFlyout.loading && !meaningFlyout.meaning ? (
+            <a
+              href={meaningFlyout.fallbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dictionary-flyout__link"
+            >
+              Ireki Elhuyar-en
+            </a>
+          ) : null}
+        </section>
       ) : null}
     </AppShell>
   );

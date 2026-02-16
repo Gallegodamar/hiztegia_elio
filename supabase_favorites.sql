@@ -59,6 +59,32 @@ grant execute on function public.validate_user_key(text, text)
 
 grant usage on schema public to anon, authenticated;
 
+create table if not exists public.syn_words (
+  source_id bigint generated always as identity primary key,
+  hitza text not null,
+  sinonimoak text[] not null default '{}',
+  level smallint not null default 1 check (level in (1, 2, 3, 4)),
+  active boolean not null default true,
+  search_text text null,
+  created_at timestamptz not null default now(),
+  check (char_length(trim(hitza)) >= 1)
+);
+
+create index if not exists syn_words_hitza_idx
+  on public.syn_words (hitza);
+
+create index if not exists syn_words_active_hitza_idx
+  on public.syn_words (active, hitza);
+
+alter table public.syn_words enable row level security;
+
+drop policy if exists "syn_words read anon and authenticated" on public.syn_words;
+create policy "syn_words read anon and authenticated"
+  on public.syn_words
+  for select
+  to anon, authenticated
+  using (true);
+
 drop function if exists public.add_synonym_word(text, text[]);
 create or replace function public.add_synonym_word(p_word text, p_synonyms text[])
 returns jsonb
@@ -71,6 +97,16 @@ declare
   v_synonyms text[];
   v_duplicate boolean;
   v_has_active_column boolean;
+  v_has_search_text_column boolean;
+  v_has_source_id_column boolean;
+  v_source_id_needs_value boolean;
+  v_source_id_is_nullable boolean;
+  v_source_id_default text;
+  v_source_id_udt_name text;
+  v_source_id_bigint bigint;
+  v_source_id_numeric numeric;
+  v_source_id_text text;
+  v_search_text text;
 begin
   v_word := lower(trim(coalesce(p_word, '')));
   if char_length(v_word) < 1 then
@@ -127,9 +163,137 @@ begin
   )
   into v_has_active_column;
 
-  if v_has_active_column then
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'syn_words'
+      and column_name = 'search_text'
+  )
+  into v_has_search_text_column;
+
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'syn_words'
+      and column_name = 'source_id'
+  )
+  into v_has_source_id_column;
+
+  if v_has_source_id_column then
+    select
+      (c.is_nullable = 'YES') as source_id_is_nullable,
+      c.column_default,
+      c.udt_name
+    into
+      v_source_id_is_nullable,
+      v_source_id_default,
+      v_source_id_udt_name
+    from information_schema.columns c
+    where c.table_schema = 'public'
+      and c.table_name = 'syn_words'
+      and c.column_name = 'source_id'
+    limit 1;
+
+    v_source_id_needs_value :=
+      (not coalesce(v_source_id_is_nullable, true))
+      and v_source_id_default is null;
+  else
+    v_source_id_needs_value := false;
+  end if;
+
+  v_search_text := trim(
+    concat_ws(
+      ' ',
+      v_word,
+      array_to_string(v_synonyms, ' ')
+    )
+  );
+
+  if v_source_id_needs_value then
+    if v_source_id_udt_name in ('int2', 'int4', 'int8') then
+      select coalesce(max(sw.source_id::bigint), 0) + 1
+      into v_source_id_bigint
+      from public.syn_words sw;
+
+      if v_has_active_column and v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active, search_text)
+        values (v_source_id_bigint, v_word, v_synonyms, 1, true, v_search_text);
+      elsif v_has_active_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active)
+        values (v_source_id_bigint, v_word, v_synonyms, 1, true);
+      elsif v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, search_text)
+        values (v_source_id_bigint, v_word, v_synonyms, 1, v_search_text);
+      else
+        insert into public.syn_words (source_id, hitza, sinonimoak, level)
+        values (v_source_id_bigint, v_word, v_synonyms, 1);
+      end if;
+    elsif v_source_id_udt_name in ('numeric', 'decimal') then
+      select coalesce(max(sw.source_id::numeric), 0) + 1
+      into v_source_id_numeric
+      from public.syn_words sw;
+
+      if v_has_active_column and v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active, search_text)
+        values (v_source_id_numeric, v_word, v_synonyms, 1, true, v_search_text);
+      elsif v_has_active_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active)
+        values (v_source_id_numeric, v_word, v_synonyms, 1, true);
+      elsif v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, search_text)
+        values (v_source_id_numeric, v_word, v_synonyms, 1, v_search_text);
+      else
+        insert into public.syn_words (source_id, hitza, sinonimoak, level)
+        values (v_source_id_numeric, v_word, v_synonyms, 1);
+      end if;
+    elsif v_source_id_udt_name in ('text', 'varchar', 'bpchar', 'citext') then
+      v_source_id_text := replace(gen_random_uuid()::text, '-', '');
+
+      if v_has_active_column and v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active, search_text)
+        values (v_source_id_text, v_word, v_synonyms, 1, true, v_search_text);
+      elsif v_has_active_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active)
+        values (v_source_id_text, v_word, v_synonyms, 1, true);
+      elsif v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, search_text)
+        values (v_source_id_text, v_word, v_synonyms, 1, v_search_text);
+      else
+        insert into public.syn_words (source_id, hitza, sinonimoak, level)
+        values (v_source_id_text, v_word, v_synonyms, 1);
+      end if;
+    elsif v_source_id_udt_name = 'uuid' then
+      if v_has_active_column and v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active, search_text)
+        values (gen_random_uuid(), v_word, v_synonyms, 1, true, v_search_text);
+      elsif v_has_active_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, active)
+        values (gen_random_uuid(), v_word, v_synonyms, 1, true);
+      elsif v_has_search_text_column then
+        insert into public.syn_words (source_id, hitza, sinonimoak, level, search_text)
+        values (gen_random_uuid(), v_word, v_synonyms, 1, v_search_text);
+      else
+        insert into public.syn_words (source_id, hitza, sinonimoak, level)
+        values (gen_random_uuid(), v_word, v_synonyms, 1);
+      end if;
+    else
+      return jsonb_build_object(
+        'ok', false,
+        'reason', 'invalid',
+        'message', 'Ezin da source_id automatikoki bete. Konfiguratu source_id default balioarekin.'
+      );
+    end if;
+  elsif v_has_active_column and v_has_search_text_column then
+    insert into public.syn_words (hitza, sinonimoak, level, active, search_text)
+    values (v_word, v_synonyms, 1, true, v_search_text);
+  elsif v_has_active_column then
     insert into public.syn_words (hitza, sinonimoak, level, active)
     values (v_word, v_synonyms, 1, true);
+  elsif v_has_search_text_column then
+    insert into public.syn_words (hitza, sinonimoak, level, search_text)
+    values (v_word, v_synonyms, 1, v_search_text);
   else
     insert into public.syn_words (hitza, sinonimoak, level)
     values (v_word, v_synonyms, 1);
