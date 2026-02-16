@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 268) rotate(90) scale(230)">
+      <stop stop-color="#78E0CF"/>
+      <stop offset="1" stop-color="#31A89A"/>
+    </radialGradient>
+    <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(268 218) rotate(90) scale(128)">
+      <stop stop-color="#B14A1E"/>
+      <stop offset="1" stop-color="#7E2E14"/>
+    </radialGradient>
+    <linearGradient id="g2" x1="210" y1="202" x2="320" y2="276" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8B1F"/>
+      <stop offset="1" stop-color="#FF4A13"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="28" y="28" width="456" height="456" rx="86" fill="url(#bg)"/>
+  <ellipse cx="256" cy="390" rx="112" ry="22" fill="#0F4F44" fill-opacity="0.22"/>
+
+  <ellipse cx="262" cy="232" rx="136" ry="140" fill="url(#g1)" stroke="#5E210F" stroke-width="4"/>
+  <ellipse cx="276" cy="280" rx="114" ry="88" fill="url(#g2)"/>
+  <path d="M190 268C152 275 136 244 147 222C162 196 204 200 223 223C236 241 230 259 190 268Z" fill="#7D2E14" stroke="#65230F" stroke-width="3"/>
+  <path d="M337 264C374 273 394 245 386 223C376 198 340 199 319 218C306 233 303 251 337 264Z" fill="#7D2E14" stroke="#65230F" stroke-width="3"/>
+  <ellipse cx="222" cy="372" rx="78" ry="50" fill="#FFEBC8"/>
+  <ellipse cx="222" cy="216" rx="50" ry="58" fill="#FFF4DE"/>
+  <ellipse cx="303" cy="206" rx="52" ry="61" fill="#FFF4DE"/>
+  <ellipse cx="228" cy="224" rx="33" ry="38" fill="#171717"/>
+  <ellipse cx="309" cy="214" rx="35" ry="40" fill="#171717"/>
+  <ellipse cx="219" cy="199" rx="11" ry="12" fill="white"/>
+  <ellipse cx="300" cy="188" rx="12" ry="13" fill="white"/>
+  <path d="M251 242C269 232 291 232 306 242C296 260 265 261 251 242Z" fill="#FFD43E" stroke="#E3A700" stroke-width="3"/>
+  <path d="M269 251C276 264 289 269 299 263" stroke="#6E2A12" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="258" cy="392" rx="20" ry="12" fill="#5C1E10"/>
+  <ellipse cx="289" cy="392" rx="20" ry="12" fill="#5C1E10"/>
+</svg>
