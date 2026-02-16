@@ -4,6 +4,7 @@ import { DifficultyLevel } from '../types';
 import { AppShell } from './layout/AppShell';
 import { useDebouncedWordSearch } from '../hooks/useDebouncedWordSearch';
 import {
+  addSynonymWord,
   deleteFavoriteById,
   fetchFavoritesByUsername,
   insertFavoriteByUsername,
@@ -26,7 +27,7 @@ import {
   writeActiveUser,
 } from '../lib/userFavorites';
 
-type ActiveView = 'dictionary' | 'favorites';
+type ActiveView = 'dictionary' | 'favorites' | 'addSynonym';
 const RESULTS_PAGE_SIZE = 10;
 
 const levelBadgeClass = (level: DifficultyLevel): string => {
@@ -127,10 +128,14 @@ const ViewSwitcher: React.FC<{
   activeView: ActiveView;
   onChange: (view: ActiveView) => void;
   notice: string | null;
-}> = ({ activeView, onChange, notice }) => (
+  isAdminUser: boolean;
+}> = ({ activeView, onChange, notice, isAdminUser }) => (
   <section className="surface-card p-4">
     <div className="flex flex-wrap gap-2">
-      {(['dictionary', 'favorites'] as const).map((view) => (
+      {(isAdminUser
+        ? (['dictionary', 'favorites', 'addSynonym'] as const)
+        : (['dictionary', 'favorites'] as const)
+      ).map((view) => (
         <button
           key={view}
           type="button"
@@ -142,7 +147,11 @@ const ViewSwitcher: React.FC<{
               : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300')
           }
         >
-          {view === 'dictionary' ? 'Hiztegia' : 'Gogokoak'}
+          {view === 'dictionary'
+            ? 'Hiztegia'
+            : view === 'favorites'
+              ? 'Gogokoak'
+              : 'Sinonimoa gehitu'}
         </button>
       ))}
     </div>
@@ -623,6 +632,80 @@ const FavoritesPanel: React.FC<{
   </div>
 );
 
+const AddSynonymPanel: React.FC<{
+  newWord: string;
+  newSynonyms: string;
+  isSubmitting: boolean;
+  addError: string | null;
+  onWordChange: (value: string) => void;
+  onSynonymsChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+}> = ({
+  newWord,
+  newSynonyms,
+  isSubmitting,
+  addError,
+  onWordChange,
+  onSynonymsChange,
+  onSubmit,
+}) => (
+  <section className="surface-card p-4 md:p-5">
+    <form onSubmit={onSubmit} className="space-y-4">
+      <p className="text-sm text-slate-600">
+        Hitz berria sinonimoen hiztegian gehitu (beti <strong>1. mailan</strong>).
+      </p>
+      <p className="text-xs text-slate-500">
+        Sistemak automatikoki egiaztatzen du hitza jada badagoen sinonimoen
+        hiztegi osoan.
+      </p>
+
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+          Hitza
+        </span>
+        <input
+          type="text"
+          value={newWord}
+          onChange={(event) => onWordChange(event.target.value)}
+          placeholder="Adib. dagoeneko"
+          className="input-shell"
+          required
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+          Sinonimoak
+        </span>
+        <textarea
+          value={newSynonyms}
+          onChange={(event) => onSynonymsChange(event.target.value)}
+          placeholder="Adib. jadanik, honezkero, dagoenez"
+          className="input-shell min-h-24 resize-y"
+          required
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Banandu komaz, puntu eta komaz edo lerro-jauziez.
+        </p>
+      </label>
+
+      {addError ? (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600">
+          {addError}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn-primary w-full py-3 text-sm"
+      >
+        {isSubmitting ? 'Gordetzen...' : 'Sinonimoa gehitu'}
+      </button>
+    </form>
+  </section>
+);
+
 export const DictionaryApp: React.FC = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState(() => readActiveUser() ?? '');
@@ -652,6 +735,11 @@ export const DictionaryApp: React.FC = () => {
   const [historyDate, setHistoryDate] = useState(() => todayKey());
   const [favoriteQuery, setFavoriteQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
+  const [newSynonymWord, setNewSynonymWord] = useState('');
+  const [newSynonymList, setNewSynonymList] = useState('');
+  const [isSubmittingSynonym, setIsSubmittingSynonym] = useState(false);
+  const [addSynonymError, setAddSynonymError] = useState<string | null>(null);
+  const isAdminUser = username === 'admin';
 
   const currentDay = todayKey();
   const allDays = useMemo(
@@ -735,6 +823,18 @@ export const DictionaryApp: React.FC = () => {
     const timer = window.setTimeout(() => setNotice(null), 2200);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    if (activeView !== 'addSynonym' && addSynonymError) {
+      setAddSynonymError(null);
+    }
+  }, [activeView, addSynonymError]);
+
+  useEffect(() => {
+    if (!isAdminUser && activeView === 'addSynonym') {
+      setActiveView('dictionary');
+    }
+  }, [activeView, isAdminUser]);
 
   useEffect(() => {
     if (searchMode === 'synonyms') {
@@ -872,6 +972,10 @@ export const DictionaryApp: React.FC = () => {
     setNotice(null);
     setHistoryDate(todayKey());
     setFavoriteQuery('');
+    setNewSynonymWord('');
+    setNewSynonymList('');
+    setIsSubmittingSynonym(false);
+    setAddSynonymError(null);
   }, []);
 
   const saveFavorite = useCallback(
@@ -995,6 +1099,54 @@ export const DictionaryApp: React.FC = () => {
     [username]
   );
 
+  const onSubmitNewSynonym = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!isAdminUser) {
+        setAddSynonymError('Aukera hau admin erabiltzailearentzat bakarrik da.');
+        return;
+      }
+
+      const word = newSynonymWord.trim();
+      const synonyms = Array.from(
+        new Set(
+          newSynonymList
+            .split(/[\n,;]+/g)
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+        )
+      );
+
+      if (!word) {
+        setAddSynonymError('Hitza bete behar da.');
+        return;
+      }
+
+      if (synonyms.length === 0) {
+        setAddSynonymError('Sinonimo bat gutxienez bete behar da.');
+        return;
+      }
+
+      setIsSubmittingSynonym(true);
+      setAddSynonymError(null);
+
+      const result = await addSynonymWord(word, synonyms);
+
+      setIsSubmittingSynonym(false);
+      if (!result.ok) {
+        setAddSynonymError(result.error?.message ?? 'Ezin izan da sinonimoa gehitu.');
+        return;
+      }
+
+      setNewSynonymWord('');
+      setNewSynonymList('');
+      setNotice(`"${word.trim().toLowerCase()}" sinonimoen hiztegian gorde da (1. maila).`);
+      setSearchMode('synonyms');
+      setSearchTerm(word.trim().toLowerCase());
+    },
+    [isAdminUser, newSynonymList, newSynonymWord]
+  );
+
   if (!username) {
     return (
       <LoginView
@@ -1023,14 +1175,13 @@ export const DictionaryApp: React.FC = () => {
         />
       }
       topRightControl={
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.08em] text-slate-600">
-            {username}
-          </span>
-          <button onClick={logout} className="btn-ghost" type="button">
-            Irten
-          </button>
-        </div>
+        <button
+          onClick={logout}
+          className="btn-secondary !py-1.5 !px-3 !text-sm"
+          type="button"
+        >
+          {username} - Irten
+        </button>
       }
       contentClassName="mx-auto w-full max-w-5xl space-y-4"
     >
@@ -1038,6 +1189,7 @@ export const DictionaryApp: React.FC = () => {
         activeView={activeView}
         onChange={setActiveView}
         notice={notice}
+        isAdminUser={isAdminUser}
       />
 
       {activeView === 'dictionary' ? (
@@ -1080,7 +1232,7 @@ export const DictionaryApp: React.FC = () => {
             />
           )}
         </div>
-      ) : (
+      ) : activeView === 'favorites' ? (
         <FavoritesPanel
           currentDay={currentDay}
           historyDate={historyDate}
@@ -1094,7 +1246,23 @@ export const DictionaryApp: React.FC = () => {
           onDeleteFavorite={onDeleteFavorite}
           onStudyWord={onStudyWord}
         />
-      )}
+      ) : isAdminUser ? (
+        <AddSynonymPanel
+          newWord={newSynonymWord}
+          newSynonyms={newSynonymList}
+          isSubmitting={isSubmittingSynonym}
+          addError={addSynonymError}
+          onWordChange={(value) => {
+            setNewSynonymWord(value);
+            if (addSynonymError) setAddSynonymError(null);
+          }}
+          onSynonymsChange={(value) => {
+            setNewSynonymList(value);
+            if (addSynonymError) setAddSynonymError(null);
+          }}
+          onSubmit={onSubmitNewSynonym}
+        />
+      ) : null}
     </AppShell>
   );
 };

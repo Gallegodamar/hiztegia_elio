@@ -20,6 +20,25 @@ const normalizeSynonyms = (value: unknown): string[] => {
   );
 };
 
+const normalizeSearchTerm = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+const termMatchesMode = (
+  candidate: string,
+  normalizedToken: string,
+  isSuffixSearch: boolean
+): boolean => {
+  const normalizedCandidate = normalizeSearchTerm(candidate);
+  if (!normalizedCandidate) return false;
+  return isSuffixSearch
+    ? normalizedCandidate.endsWith(normalizedToken)
+    : normalizedCandidate.startsWith(normalizedToken);
+};
+
 export const searchWords = async (term: string): Promise<SearchResultItem[]> => {
   const normalizedTerm = term.trim().toLowerCase();
   if (!normalizedTerm) return [];
@@ -27,27 +46,77 @@ export const searchWords = async (term: string): Promise<SearchResultItem[]> => 
   const isSuffixSearch = normalizedTerm.startsWith('*');
   const token = normalizedTerm.replace(/\*/g, '').trim();
   if (token.length < 1) return [];
+  const normalizedToken = normalizeSearchTerm(token);
+  if (!normalizedToken) return [];
 
   const pattern = isSuffixSearch ? `%${token}` : `${token}%`;
+  const selectColumns = 'source_id, hitza, sinonimoak, level';
 
-  const { data, error } = await supabase
+  const { data: hitzaData, error: hitzaError } = await supabase
     .from('syn_words')
-    .select('source_id, hitza, sinonimoak, level')
+    .select(selectColumns)
     .ilike('hitza', pattern)
     .eq('active', true)
     .order('hitza', { ascending: true })
     .limit(200);
 
-  if (error || !data) return [];
-
-  const rows = data as Array<{
+  type SynWordRow = {
     source_id: string | number;
     hitza: string;
     sinonimoak: unknown;
     level: DifficultyLevel;
-  }>;
+  };
 
-  return rows.map((row) => ({
+  const rowsByHitza = hitzaError || !hitzaData ? [] : (hitzaData as SynWordRow[]);
+  let rowsBySynonym: SynWordRow[] = [];
+
+  const { data: searchTextData, error: searchTextError } = await supabase
+    .from('syn_words')
+    .select(selectColumns)
+    .ilike('search_text', `%${token}%`)
+    .eq('active', true)
+    .order('hitza', { ascending: true })
+    .limit(300);
+
+  if (!searchTextError && searchTextData) {
+    rowsBySynonym = searchTextData as SynWordRow[];
+  } else {
+    const errorMessage = (searchTextError?.message ?? '').toLowerCase();
+    const isMissingSearchTextColumn =
+      errorMessage.includes('search_text') && errorMessage.includes('does not exist');
+
+    if (isMissingSearchTextColumn) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('syn_words')
+        .select(selectColumns)
+        .eq('active', true)
+        .order('hitza', { ascending: true })
+        .limit(1200);
+      if (!fallbackError && fallbackData) {
+        rowsBySynonym = fallbackData as SynWordRow[];
+      }
+    }
+  }
+
+  const merged = new Map<string, SynWordRow>();
+  [...rowsByHitza, ...rowsBySynonym].forEach((row) => {
+    const key = String(row.source_id ?? row.hitza).trim();
+    if (!key || merged.has(key)) return;
+    merged.set(key, row);
+  });
+
+  const filteredRows = Array.from(merged.values())
+    .filter((row) => {
+      if (termMatchesMode(row.hitza, normalizedToken, isSuffixSearch)) return true;
+      const synonyms = normalizeSynonyms(row.sinonimoak);
+      return synonyms.some((synonym) =>
+        termMatchesMode(synonym, normalizedToken, isSuffixSearch)
+      );
+    })
+    .sort((a, b) => a.hitza.localeCompare(b.hitza, 'eu', { sensitivity: 'base' }))
+    .slice(0, 200);
+
+  return filteredRows.map((row) => ({
     id: row.source_id,
     hitza: row.hitza,
     sinonimoak: normalizeSynonyms(row.sinonimoak),
@@ -160,6 +229,161 @@ export const validateUserAccessKey = async (
   }
 
   return { ok: Boolean(data) };
+};
+
+export type AddSynonymWordErrorReason =
+  | 'invalid'
+  | 'duplicate'
+  | 'missing_table'
+  | 'missing_function'
+  | 'error';
+
+export type AddSynonymWordResult = {
+  ok: boolean;
+  error: { reason: AddSynonymWordErrorReason; message: string } | null;
+};
+
+type AddSynonymWordRpcResponse = {
+  ok?: boolean;
+  reason?: string | null;
+  message?: string | null;
+};
+
+const normalizeSynonymWordInput = (value: string): string => value.trim().toLowerCase();
+
+const sanitizeNewSynonyms = (value: string[]): string[] =>
+  Array.from(
+    new Set(
+      value
+        .map((item) => normalizeSynonymWordInput(item))
+        .filter((item) => item.length > 0)
+    )
+  );
+
+export const addSynonymWord = async (
+  word: string,
+  synonyms: string[]
+): Promise<AddSynonymWordResult> => {
+  const normalizedWord = normalizeSynonymWordInput(word);
+  const sanitizedSynonyms = sanitizeNewSynonyms(synonyms).filter(
+    (synonym) => synonym !== normalizedWord
+  );
+
+  if (!normalizedWord) {
+    return {
+      ok: false,
+      error: {
+        reason: 'invalid',
+        message: 'Hitza bete behar da.',
+      },
+    };
+  }
+
+  if (sanitizedSynonyms.length === 0) {
+    return {
+      ok: false,
+      error: {
+        reason: 'invalid',
+        message: 'Sinonimo bat gutxienez behar da.',
+      },
+    };
+  }
+
+  const { data, error } = await supabase.rpc('add_synonym_word', {
+    p_word: normalizedWord,
+    p_synonyms: sanitizedSynonyms,
+  });
+
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (
+      (message.includes('function') && message.includes('add_synonym_word')) ||
+      (message.includes('could not find the function') &&
+        message.includes('add_synonym_word'))
+    ) {
+      return {
+        ok: false,
+        error: {
+          reason: 'missing_function',
+          message:
+            'Sinonimo berriak gehitzeko funtzioa falta da Supabasen. Exekutatu supabase_favorites.sql.',
+        },
+      };
+    }
+    if (message.includes('relation') && message.includes('syn_words')) {
+      return {
+        ok: false,
+        error: {
+          reason: 'missing_table',
+          message: '"syn_words" taula falta da Supabasen.',
+        },
+      };
+    }
+    return {
+      ok: false,
+      error: {
+        reason: 'error',
+        message: error.message,
+      },
+    };
+  }
+
+  const payload =
+    data && typeof data === 'object'
+      ? (data as AddSynonymWordRpcResponse)
+      : null;
+
+  if (!payload) {
+    return {
+      ok: false,
+      error: {
+        reason: 'error',
+        message: 'Supabasetik erantzun baliogabea jaso da.',
+      },
+    };
+  }
+
+  if (payload.ok) {
+    return { ok: true, error: null };
+  }
+
+  const reason = (payload.reason ?? 'error').toLowerCase();
+  if (reason === 'duplicate') {
+    return {
+      ok: false,
+      error: {
+        reason: 'duplicate',
+        message:
+          payload.message ?? 'Hitza jada badago sinonimoen hiztegian.',
+      },
+    };
+  }
+  if (reason === 'missing_table') {
+    return {
+      ok: false,
+      error: {
+        reason: 'missing_table',
+        message: payload.message ?? '"syn_words" taula falta da Supabasen.',
+      },
+    };
+  }
+  if (reason === 'invalid') {
+    return {
+      ok: false,
+      error: {
+        reason: 'invalid',
+        message: payload.message ?? 'Datuak ez dira baliozkoak.',
+      },
+    };
+  }
+
+  return {
+    ok: false,
+    error: {
+      reason: 'error',
+      message: payload.message ?? 'Ezin izan da sinonimoa gehitu.',
+    },
+  };
 };
 
 const DICTIONARY_WORD_COLUMN_CANDIDATES = [

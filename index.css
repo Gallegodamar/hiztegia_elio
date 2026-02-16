@@ -182,14 +182,14 @@ button:disabled {
 }
 
 .app-shell__header--with-control {
-  padding-right: calc(10.2rem + var(--sar));
+  padding-right: calc(11.4rem + var(--sar));
 }
 
 .app-shell__header-control {
   position: absolute;
-  top: 50%;
+  bottom: 0.68rem;
   right: calc(1.5rem + var(--sar));
-  transform: translateY(-50%);
+  transform: none;
 }
 
 .app-shell__content {
@@ -495,7 +495,7 @@ input[type='range']::-webkit-slider-thumb {
 
 @media (max-width: 960px) {
   .app-shell__header--with-control {
-    padding-right: calc(8.8rem + var(--sar));
+    padding-right: calc(10rem + var(--sar));
   }
 }
 
@@ -511,10 +511,11 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .app-shell__header--with-control {
-    padding-right: calc(8.6rem + var(--sar));
+    padding-right: calc(9.8rem + var(--sar));
   }
 
   .app-shell__header-control {
+    bottom: 0.58rem;
     right: calc(1rem + var(--sar));
   }
 
