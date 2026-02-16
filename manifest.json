@@ -10,38 +10,62 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/elio_icon_192.png",
+      "src": "/elio_pwa_192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/elio_icon_512.png",
+      "src": "/elio_pwa_512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/elio_icon_180.png",
+      "src": "/elio_ios_180.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/elio_icon_48.png",
-      "sizes": "48x48",
+      "src": "/elio_favicon_64.png",
+      "sizes": "64x64",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/elio_icon_32.png",
+      "src": "/elio_favicon_32.png",
       "sizes": "32x32",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/elio_icon_16.png",
+      "src": "/elio_favicon_16.png",
       "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/elio_android_144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/elio_android_96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/elio_android_72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/elio_android_48.png",
+      "sizes": "48x48",
       "type": "image/png",
       "purpose": "any"
     }
