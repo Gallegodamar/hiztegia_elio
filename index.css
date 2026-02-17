@@ -262,14 +262,15 @@ button:disabled {
   right: 0;
   bottom: 0;
   z-index: 48;
-  height: calc(var(--bottom-nav-h) + var(--sab));
+  height: var(--bottom-nav-h);   /* ✅ solo la barra */
   padding: 0;
-  padding-bottom: var(--sab);
+  padding-bottom: var(--sab);    /* ✅ safe-area solo aquí */
   box-sizing: border-box;
   align-items: flex-end;
   border-top: 0;
   background: transparent;
   backdrop-filter: none;
+  justify-content: center;
 }
 
 .app-shell__footer--ghost {
