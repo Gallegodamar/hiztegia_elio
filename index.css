@@ -5,7 +5,7 @@
   --sab: env(safe-area-inset-bottom);
   --sal: env(safe-area-inset-left);
   --sar: env(safe-area-inset-right);
-  --bottom-nav-h: 76px;
+  --bottom-nav-h: 58px;
 
   --elio-yellow-500: #60d9e8;
   --elio-yellow-600: #45cde1;
@@ -265,15 +265,16 @@ button:disabled {
   z-index: 48;
   border-top: 0;
 
-  height: var(--bottom-nav-h);
-  padding-bottom: var(--sab);
+  height: auto;
+  min-height: 0;
+  padding-bottom: 0;
   box-sizing: border-box;
 
   display: flex;
   align-items: flex-end;
   justify-content: center;
 
-  background: transparent;
+  background: rgba(225, 242, 255, 0.96);
 }
 
 .app-shell__footer--taskbar::before {
@@ -283,9 +284,9 @@ button:disabled {
   right: 0;
   bottom: 0;
 
-  height: calc(var(--bottom-nav-h) + var(--sab));
+  height: 100%;
 
-  background: transparent;
+  background: rgba(225, 242, 255, 0.96);
   backdrop-filter: none;
   border-top: 0;
   z-index: -1;
@@ -1517,12 +1518,12 @@ input[type='range']::-webkit-slider-thumb {
   .bottom-taskbar {
     width: calc(100% - 0.65rem);
     margin: 0 auto;
-    height: var(--bottom-nav-h);
+    height: auto;
     border: 1px solid rgba(212, 222, 233, 0.96);
     border-top: 0;
     border-radius: 1.42rem;
     background: #f3f6fa;
-    padding: 0.52rem 0.62rem;
+    padding: 0.36rem 0.62rem;
     box-shadow:
       0 10px 22px -22px rgba(34, 68, 109, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.84);
