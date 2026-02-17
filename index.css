@@ -288,6 +288,7 @@ button:disabled {
   backdrop-filter: none; /* opcional, evita transparencias */
   border-top: 0;         /* 🔴 elimina la raya */
   z-index: -1;
+}
 
 .app-shell__footer--ghost {
   border-top: 0;
