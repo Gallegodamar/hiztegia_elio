@@ -268,8 +268,8 @@ button:disabled {
   box-sizing: border-box;
   align-items: flex-end;
   border-top: 0;
-  background: transparent;
-  backdrop-filter: none;
+  background: rgba(15, 93, 191, 0.15);
+  backdrop-filter: blur(8px);
   justify-content: center;
 }
 
@@ -1562,6 +1562,18 @@ input[type='range']::-webkit-slider-thumb {
   .anki-card {
     min-height: 280px;
   }
+/* Dispositivos táctiles (móvil/tablet): sin padding alrededor */
+@media (hover: none) and (pointer: coarse) {
+  .app-shell-frame {
+    padding: 0;
+  }
 
+  .app-shell {
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    max-width: none;
+  }
+}
   
 }
