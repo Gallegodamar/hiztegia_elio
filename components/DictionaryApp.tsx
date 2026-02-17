@@ -262,17 +262,30 @@ const DictionarySearchControls: React.FC<{
         Esanahia
       </button>
     </div>
-    <input
-      type="text"
-      value={searchTerm}
-      onChange={(event) => onTerm(event.target.value)}
-      placeholder={
-        searchMode === 'synonyms'
-          ? 'Idatzi hitz bat edo sinonimo bat...'
-          : 'Idatzi hitz bat esanahia ikusteko...'
-      }
-      className="input-shell input-shell--large"
-    />
+    <div className="search-input-shell">
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(event) => onTerm(event.target.value)}
+        placeholder={
+          searchMode === 'synonyms'
+            ? 'Idatzi hitz bat edo sinonimo bat...'
+            : 'Idatzi hitz bat esanahia ikusteko...'
+        }
+        className="input-shell input-shell--large input-shell--with-clear"
+      />
+      {searchTerm.trim().length > 0 ? (
+        <button
+          type="button"
+          onClick={() => onTerm('')}
+          className="search-input-clear"
+          aria-label="Bilaketa garbitu"
+          title="Garbitu"
+        >
+          x
+        </button>
+      ) : null}
+    </div>
   </section>
 );
 
@@ -618,18 +631,27 @@ const FavoritesPanel: React.FC<{
       </section>
 
       <section className="surface-card p-4">
-        <label className="block">
-          <span className="field-label">
-            Gogokoetan bilatu
-          </span>
+        <div className="search-input-shell">
           <input
             type="text"
             value={favoriteQuery}
             onChange={(event) => onFavoriteQueryChange(event.target.value)}
             placeholder="Hitzaren arabera iragazi..."
-            className="input-shell !py-2.5 !text-sm"
+            className="input-shell input-shell--with-clear !py-2.5 !text-sm"
+            aria-label="Gogokoetan bilatu"
           />
-        </label>
+          {favoriteQuery.trim().length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onFavoriteQueryChange('')}
+              className="search-input-clear"
+              aria-label="Bilaketa garbitu"
+              title="Garbitu"
+            >
+              x
+            </button>
+          ) : null}
+        </div>
       </section>
     </div>
 
