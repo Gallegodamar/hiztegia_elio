@@ -867,11 +867,8 @@ button:disabled {
   stroke-linejoin: round;
 }
 
-.bottom-taskbar__logo-icon {
-  width: 1.56rem;
-  height: 1.56rem;
-  display: block;
-  object-fit: contain;
+.bottom-taskbar__icon--dictionary {
+  color: #4b86c5;
 }
 
 .bottom-taskbar__icon--favorites {
@@ -1532,11 +1529,6 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .bottom-taskbar__icon {
-    width: 1.32rem;
-    height: 1.32rem;
-  }
-
-  .bottom-taskbar__logo-icon {
     width: 1.32rem;
     height: 1.32rem;
   }

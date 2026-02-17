@@ -168,8 +168,16 @@ const LoginView: React.FC<{
   </AppShell>
 );
 
-const MenuLogoIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <img src={APP_ICON_SRC} alt="" className={className} aria-hidden="true" />
+const OpenBookIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 6.6c-1.1-.7-2.4-1.1-3.8-1.1H5.8c-.9 0-1.6.7-1.6 1.6v9.8c0 .9.7 1.6 1.6 1.6h2.3c1.4 0 2.7.4 3.9 1.1 1.2-.7 2.5-1.1 3.9-1.1h2.3c.9 0 1.6-.7 1.6-1.6V7.1c0-.9-.7-1.6-1.6-1.6H16c-1.4 0-2.7.4-4 1.1Z" />
+    <path d="M12 6.6V18.7" />
+  </svg>
 );
 
 const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -254,7 +262,7 @@ const BottomTaskBar: React.FC<{
                 title={label}
               >
                 {view === 'dictionary' ? (
-                  <MenuLogoIcon className="bottom-taskbar__logo-icon" />
+                  <OpenBookIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
                 ) : view === 'favorites' ? (
                   <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
                 ) : (
