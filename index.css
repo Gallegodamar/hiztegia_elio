@@ -256,21 +256,34 @@ button:disabled {
 }
 
 .app-shell__footer--taskbar {
-  display: flex;
   position: fixed;
+  left: var(--sal);
+  right: var(--sar);
+  bottom: 0;
+  z-index: 48;
+
+  height: var(--bottom-nav-h);
+  padding-bottom: var(--sab);
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  background: transparent;
+}
+
+.app-shell__footer--taskbar::before {
+  content: "";
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 48;
-  height: var(--bottom-nav-h);   /* ✅ solo la barra */
-  padding: 0;
-  padding-bottom: var(--sab);    /* ✅ safe-area solo aquí */
-  box-sizing: border-box;
-  align-items: flex-end;
-  border-top: 0;
-  background: rgba(15, 93, 191, 0.15);
-  backdrop-filter: blur(8px);
-  justify-content: center;
+  height: calc(var(--bottom-nav-h) + var(--sab));
+  background: rgba(243, 246, 250, 0.92);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(214, 223, 232, 0.96);
+  z-index: -1;
 }
 
 .app-shell__footer--ghost {
