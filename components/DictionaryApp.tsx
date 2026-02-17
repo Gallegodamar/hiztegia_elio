@@ -30,6 +30,7 @@ import {
 
 type ActiveView = 'dictionary' | 'favorites' | 'addSynonym';
 const RESULTS_PAGE_SIZE = 10;
+const APP_ICON_SRC = '/icon-192x192.png';
 
 const segmentedButtonClass = (isActive: boolean): string =>
   `segmented-btn ${isActive ? 'segmented-btn--active' : 'segmented-btn--idle'}`;
@@ -42,6 +43,13 @@ const dangerActionClass = (isDisabled: boolean): string =>
 
 const buildMeaningFallbackUrl = (term: string): string =>
   `https://hiztegiak.elhuyar.eus/eu/${encodeURIComponent(term)}`;
+
+const openExternalDictionary = (url: string): void => {
+  const externalWindow = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!externalWindow) {
+    window.location.assign(url);
+  }
+};
 
 const isTermReady = (value: string): boolean =>
   value.trim().replace(/\*/g, '').length >= 1;
@@ -79,7 +87,7 @@ const ScreenHeader: React.FC<{
   <div className="elio-brand-header">
     <div className="elio-brand-header__main">
       <div className="elio-brand-icon-shell" aria-hidden="true">
-        <img src="/elio_appstore_1024.png" alt="" className="elio-brand-icon" />
+        <img src={APP_ICON_SRC} alt="" className="elio-brand-icon" />
       </div>
       <div className="min-w-0">
         <h1 className="display-title">{title}</h1>
@@ -160,22 +168,8 @@ const LoginView: React.FC<{
   </AppShell>
 );
 
-const BookmarkStarIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      className="bookmark-star-icon__bookmark"
-      d="M7.1 4.6h7.3c.9 0 1.6.7 1.6 1.6v12.1l-5.3-2.7-5.3 2.7V6.2c0-.9.7-1.6 1.7-1.6Z"
-    />
-    <path
-      className="bookmark-star-icon__star"
-      d="m17.9 3.8.7 1.4 1.6.2-1.1 1.1.3 1.6-1.5-.8-1.4.8.2-1.6-1.1-1.1 1.6-.2.7-1.4Z"
-    />
-  </svg>
+const MenuLogoIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <img src={APP_ICON_SRC} alt="" className={className} aria-hidden="true" />
 );
 
 const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -260,7 +254,7 @@ const BottomTaskBar: React.FC<{
                 title={label}
               >
                 {view === 'dictionary' ? (
-                  <BookmarkStarIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
+                  <MenuLogoIcon className="bottom-taskbar__logo-icon" />
                 ) : view === 'favorites' ? (
                   <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
                 ) : (
@@ -337,6 +331,7 @@ const SynonymSearchResults: React.FC<{
   isSavingWord: (word: string) => boolean;
   onSave: (row: SearchResultItem) => void;
   onOpenMeaning: (term: string, anchorEl: HTMLElement) => void;
+  onSearchWord: (word: string) => void;
 }> = ({
   searchTerm,
   isSearching,
@@ -347,6 +342,7 @@ const SynonymSearchResults: React.FC<{
   isSavingWord,
   onSave,
   onOpenMeaning,
+  onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
     return (
@@ -440,9 +436,9 @@ const SynonymSearchResults: React.FC<{
                 <button
                   key={`${row.id}-${synonym}-${synonymIndex}`}
                   type="button"
-                  onClick={(event) => onOpenMeaning(synonym, event.currentTarget)}
+                  onClick={() => onSearchWord(synonym)}
                   className="term-chip"
-                  title="Esanahia ikusi"
+                  title={`"${synonym}" bilatu`}
                 >
                   {synonym}
                 </button>
@@ -466,6 +462,7 @@ const MeaningSearchResults: React.FC<{
   isSavedToday: (word: string) => boolean;
   isSavingWord: (word: string) => boolean;
   onSave: (word: string, meaning: string) => void;
+  onSearchWord: (word: string) => void;
 }> = ({
   searchTerm,
   isMeaningLoading,
@@ -476,6 +473,7 @@ const MeaningSearchResults: React.FC<{
   isSavedToday,
   isSavingWord,
   onSave,
+  onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
     return (
@@ -573,12 +571,15 @@ const MeaningSearchResults: React.FC<{
                   {row.sinonimoak.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {row.sinonimoak.map((synonym, synonymIndex) => (
-                        <span
+                        <button
                           key={`${row.hitza}-${synonym}-${synonymIndex}`}
-                          className="term-chip term-chip--static"
+                          type="button"
+                          onClick={() => onSearchWord(synonym)}
+                          className="term-chip"
+                          title={`"${synonym}" bilatu`}
                         >
                           {synonym}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   ) : null}
@@ -864,6 +865,7 @@ export const DictionaryApp: React.FC = () => {
   const [isMeaningLoading, setIsMeaningLoading] = useState(false);
   const [meaningFallbackUrl, setMeaningFallbackUrl] = useState<string | null>(null);
   const meaningRequestRef = useRef(0);
+  const meaningAutoFallbackTermKeyRef = useRef<string | null>(null);
   const [meaningFlyout, setMeaningFlyout] = useState<MeaningFlyout | null>(null);
   const meaningFlyoutRef = useRef<HTMLDivElement | null>(null);
   const meaningFlyoutRequestRef = useRef(0);
@@ -1017,6 +1019,7 @@ export const DictionaryApp: React.FC = () => {
   useEffect(() => {
     if (searchMode !== 'meaning') {
       meaningRequestRef.current += 1;
+      meaningAutoFallbackTermKeyRef.current = null;
       setMeaningRows([]);
       setMeaningPage(1);
       setMeaningFallbackUrl(null);
@@ -1027,6 +1030,7 @@ export const DictionaryApp: React.FC = () => {
     const normalized = searchTerm.trim();
     if (!isTermReady(normalized)) {
       meaningRequestRef.current += 1;
+      meaningAutoFallbackTermKeyRef.current = null;
       setMeaningRows([]);
       setMeaningPage(1);
       setMeaningFallbackUrl(null);
@@ -1040,21 +1044,40 @@ export const DictionaryApp: React.FC = () => {
       try {
         const results = await searchDictionaryMeanings(normalized, 200);
         if (requestId !== meaningRequestRef.current) return;
+        const normalizedSearchKey = normalizeFavoriteWordKey(normalized);
+        const shouldAutoOpenFallback =
+          Boolean(normalizedSearchKey) &&
+          meaningAutoFallbackTermKeyRef.current === normalizedSearchKey;
 
         if (results.length > 0) {
+          meaningAutoFallbackTermKeyRef.current = null;
           setMeaningRows(results);
           setMeaningPage(1);
           setMeaningFallbackUrl(null);
         } else {
+          const fallbackUrl = buildMeaningFallbackUrl(normalized);
+          if (shouldAutoOpenFallback) {
+            meaningAutoFallbackTermKeyRef.current = null;
+            openExternalDictionary(fallbackUrl);
+          }
           setMeaningRows([]);
           setMeaningPage(1);
-          setMeaningFallbackUrl(buildMeaningFallbackUrl(normalized));
+          setMeaningFallbackUrl(fallbackUrl);
         }
       } catch {
         if (requestId !== meaningRequestRef.current) return;
+        const normalizedSearchKey = normalizeFavoriteWordKey(normalized);
+        const shouldAutoOpenFallback =
+          Boolean(normalizedSearchKey) &&
+          meaningAutoFallbackTermKeyRef.current === normalizedSearchKey;
+        const fallbackUrl = buildMeaningFallbackUrl(normalized);
+        if (shouldAutoOpenFallback) {
+          meaningAutoFallbackTermKeyRef.current = null;
+          openExternalDictionary(fallbackUrl);
+        }
         setMeaningRows([]);
         setMeaningPage(1);
-        setMeaningFallbackUrl(buildMeaningFallbackUrl(normalized));
+        setMeaningFallbackUrl(fallbackUrl);
       } finally {
         if (requestId !== meaningRequestRef.current) return;
         setIsMeaningLoading(false);
@@ -1265,6 +1288,15 @@ export const DictionaryApp: React.FC = () => {
     setSearchTerm(word);
   }, []);
 
+  const onSearchMeaningWord = useCallback((word: string) => {
+    const normalizedWord = word.trim();
+    if (!normalizedWord) return;
+    meaningAutoFallbackTermKeyRef.current = normalizeFavoriteWordKey(normalizedWord) || null;
+    setActiveView('dictionary');
+    setSearchMode('meaning');
+    setSearchTerm(normalizedWord);
+  }, []);
+
   const onSaveSynonymRow = useCallback(
     (row: SearchResultItem) => {
       saveFavorite({
@@ -1460,6 +1492,7 @@ export const DictionaryApp: React.FC = () => {
                 isSavingWord={isSavingWord}
                 onSave={onSaveSynonymRow}
                 onOpenMeaning={openMeaningFlyout}
+                onSearchWord={(word) => onStudyWord(word, 'synonyms')}
               />
             ) : (
               <MeaningSearchResults
@@ -1474,6 +1507,7 @@ export const DictionaryApp: React.FC = () => {
                 onSave={(word, meaning) =>
                   saveFavorite({ word, mode: 'meaning', meaning })
                 }
+                onSearchWord={onSearchMeaningWord}
               />
             )}
           </div>

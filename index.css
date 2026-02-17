@@ -225,7 +225,7 @@ button:disabled {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   padding: 1.2rem calc(1.5rem + var(--sar)) 1.2rem calc(1.5rem + var(--sal));
-  padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
+  padding-bottom: 1.2rem;
   background:
     linear-gradient(180deg, rgba(243, 251, 255, 0.58), rgba(225, 242, 255, 0.25)),
     radial-gradient(circle at 90% -20%, rgba(24, 118, 206, 0.1), transparent 52%);
@@ -258,13 +258,13 @@ button:disabled {
 }
 
 .app-shell__footer--taskbar {
-  position: fixed;
-  left: var(--sal);
-  right: var(--sar);
-  bottom: 0;
-  z-index: 48;
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 1;
   border-top: 0;
-
+  width: 100%;
   height: auto;
   min-height: 0;
   padding-bottom: 0;
@@ -278,18 +278,7 @@ button:disabled {
 }
 
 .app-shell__footer--taskbar::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  height: 100%;
-
-  background: #f3f6fa;
-  backdrop-filter: none;
-  border-top: 0;
-  z-index: -1;
+  content: none;
 }
 
 .app-shell__footer--ghost {
@@ -807,9 +796,7 @@ button:disabled {
 .bottom-taskbar {
   margin: 0;
   width: 100%;
-  border: 1px solid rgba(214, 223, 232, 0.96);
-  border-top: 0;
-  border-bottom: 0; /* importante */
+  border: 0;
   border-radius: 0;
   background: #f3f6fa;
   box-shadow: none;
@@ -880,8 +867,11 @@ button:disabled {
   stroke-linejoin: round;
 }
 
-.bottom-taskbar__icon--dictionary {
-  color: #4b86c5;
+.bottom-taskbar__logo-icon {
+  width: 1.56rem;
+  height: 1.56rem;
+  display: block;
+  object-fit: contain;
 }
 
 .bottom-taskbar__icon--favorites {
@@ -899,24 +889,6 @@ button:disabled {
 .bottom-taskbar__icon--favorites path {
   fill: currentColor;
   stroke: none;
-}
-
-.bottom-taskbar__icon--dictionary .bookmark-star-icon__bookmark {
-  fill: none;
-  stroke: #4b86c5;
-}
-
-.bottom-taskbar__icon--dictionary .bookmark-star-icon__star {
-  fill: #6d86aa;
-  stroke: none;
-}
-
-.bottom-taskbar__button--active .bottom-taskbar__icon--dictionary .bookmark-star-icon__bookmark {
-  stroke: #ffffff;
-}
-
-.bottom-taskbar__button--active .bottom-taskbar__icon--dictionary .bookmark-star-icon__star {
-  fill: #ffffff;
 }
 
 .segmented-btn {
@@ -1417,7 +1389,7 @@ input[type='range']::-webkit-slider-thumb {
 
   .app-shell__content {
     padding: 1rem calc(1rem + var(--sar)) 1rem calc(1rem + var(--sal));
-    padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
+    padding-bottom: 1rem;
   }
 
   .app-shell__content--dictionary {
@@ -1519,14 +1491,11 @@ input[type='range']::-webkit-slider-thumb {
     width: 100%;
     margin: 0;
     height: auto;
-    border: 1px solid rgba(212, 222, 233, 0.96);
-    border-top: 0;
+    border: 0;
     border-radius: 0;
     background: #f3f6fa;
     padding: 0.36rem 0.62rem;
-    box-shadow:
-      0 10px 22px -22px rgba(34, 68, 109, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    box-shadow: none;
   }
 
   .search-tabs {
@@ -1563,6 +1532,11 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .bottom-taskbar__icon {
+    width: 1.32rem;
+    height: 1.32rem;
+  }
+
+  .bottom-taskbar__logo-icon {
     width: 1.32rem;
     height: 1.32rem;
   }
