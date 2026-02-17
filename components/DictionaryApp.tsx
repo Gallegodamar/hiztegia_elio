@@ -31,11 +31,20 @@ import {
 type ActiveView = 'dictionary' | 'favorites' | 'addSynonym';
 const RESULTS_PAGE_SIZE = 10;
 
+const segmentedButtonClass = (isActive: boolean): string =>
+  `segmented-btn ${isActive ? 'segmented-btn--active' : 'segmented-btn--idle'}`;
+
+const accentActionClass = (isDisabled: boolean): string =>
+  `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--accent'}`;
+
+const dangerActionClass = (isDisabled: boolean): string =>
+  `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--danger'}`;
+
 const levelBadgeClass = (level: DifficultyLevel): string => {
-  if (level === 1) return 'border-sky-200 bg-sky-50 text-sky-700';
-  if (level === 2) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  if (level === 3) return 'border-amber-200 bg-amber-50 text-amber-700';
-  return 'border-rose-200 bg-rose-50 text-rose-700';
+  if (level === 1) return 'level-pill--1';
+  if (level === 2) return 'level-pill--2';
+  if (level === 3) return 'level-pill--3';
+  return 'level-pill--4';
 };
 
 const buildMeaningFallbackUrl = (term: string): string =>
@@ -57,8 +66,24 @@ type MeaningFlyout = {
 const ScreenHeader: React.FC<{ title: string }> = ({
   title,
 }) => (
-  <div>
-    <h1 className="display-title">{title}</h1>
+  <div className="elio-brand-header">
+    <div className="elio-brand-header__main">
+      <div className="elio-brand-icon-shell" aria-hidden="true">
+        <img src="/elio_favicon_64.png" alt="" className="elio-brand-icon" />
+      </div>
+      <div className="min-w-0">
+        <p className="elio-kicker">Hiztegia Elio</p>
+        <h1 className="display-title">{title}</h1>
+        <p className="display-subtitle">
+          Sinonimoak, esanahiak eta eguneroko ikasketa leku berean.
+        </p>
+      </div>
+    </div>
+    <div className="elio-brand-orbs" aria-hidden="true">
+      <span className="elio-brand-orb elio-brand-orb--sun" />
+      <span className="elio-brand-orb elio-brand-orb--leaf" />
+      <span className="elio-brand-orb elio-brand-orb--dot" />
+    </div>
   </div>
 );
 
@@ -80,17 +105,13 @@ const LoginView: React.FC<{
   onSubmit,
 }) => (
   <AppShell
-    header={
-      <div className="text-center">
-        <h1 className="display-title">Hiztegia</h1>
-      </div>
-    }
-    contentClassName="flex items-center justify-center"
+    header={<ScreenHeader title="Hiztegia" />}
+    contentClassName="mx-auto flex w-full max-w-5xl items-center justify-center"
   >
-    <section className="surface-card surface-card--muted w-full max-w-lg p-6 md:p-8">
+    <section className="surface-card surface-card--muted auth-card w-full max-w-lg p-6 md:p-8">
       <form onSubmit={onSubmit} className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+          <span className="field-label">
             Erabiltzailea
           </span>
           <input
@@ -104,7 +125,7 @@ const LoginView: React.FC<{
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+          <span className="field-label">
             Gakoa
           </span>
           <input
@@ -118,7 +139,7 @@ const LoginView: React.FC<{
         </label>
 
         {usernameError ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600">
+          <p className="notice notice--error">
             {usernameError}
           </p>
         ) : null}
@@ -141,7 +162,7 @@ const ViewSwitcher: React.FC<{
   notice: string | null;
   isAdminUser: boolean;
 }> = ({ activeView, onChange, notice, isAdminUser }) => (
-  <section className="surface-card p-4">
+  <section className="surface-card view-switcher p-4">
     <div className="flex flex-wrap gap-2">
       {(isAdminUser
         ? (['dictionary', 'favorites', 'addSynonym'] as const)
@@ -151,12 +172,7 @@ const ViewSwitcher: React.FC<{
           key={view}
           type="button"
           onClick={() => onChange(view)}
-          className={
-            'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-            (activeView === view
-              ? 'border-teal-500 bg-teal-500 text-white'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300')
-          }
+          className={segmentedButtonClass(activeView === view)}
         >
           {view === 'dictionary'
             ? 'Hiztegia'
@@ -167,7 +183,7 @@ const ViewSwitcher: React.FC<{
       ))}
     </div>
     {notice ? (
-      <p className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-700">
+      <p className="notice notice--info mt-3">
         {notice}
       </p>
     ) : null}
@@ -180,34 +196,24 @@ const DictionarySearchControls: React.FC<{
   onMode: (mode: SearchMode) => void;
   onTerm: (value: string) => void;
 }> = ({ searchMode, searchTerm, onMode, onTerm }) => (
-  <section className="surface-card p-4 md:p-5">
+  <section className="surface-card search-controls p-4 md:p-5">
     <div className="mb-3 grid grid-cols-2 gap-2">
       <button
         type="button"
         onClick={() => onMode('synonyms')}
-        className={
-          'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-          (searchMode === 'synonyms'
-            ? 'border-teal-500 bg-teal-500 text-white'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300')
-        }
+        className={segmentedButtonClass(searchMode === 'synonyms')}
       >
         Sinonimoak
       </button>
       <button
         type="button"
         onClick={() => onMode('meaning')}
-        className={
-          'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-          (searchMode === 'meaning'
-            ? 'border-teal-500 bg-teal-500 text-white'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300')
-        }
+        className={segmentedButtonClass(searchMode === 'meaning')}
       >
         Esanahia
       </button>
     </div>
-    <p className="mb-2 text-xs font-semibold text-slate-500">
+    <p className="helper-note mb-2">
       Lehen letratik bertatik bilatzen da (adib. `a`, `a`-z hasten diren hitzak).
       Amaiera bidez bilatzeko erabili `*`: adib. `*tasun`.
     </p>
@@ -220,7 +226,7 @@ const DictionarySearchControls: React.FC<{
           ? 'Idatzi hitz bat edo sinonimo bat...'
           : 'Idatzi hitz bat esanahia ikusteko...'
       }
-      className="input-shell !py-3"
+      className="input-shell input-shell--large"
     />
   </section>
 );
@@ -248,7 +254,7 @@ const SynonymSearchResults: React.FC<{
 }) => {
   if (!isTermReady(searchTerm)) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="status-copy">
         Idazten hasi bilatzeko.
       </p>
     );
@@ -256,14 +262,14 @@ const SynonymSearchResults: React.FC<{
 
   if (isSearching) {
     return (
-      <p className="text-sm font-semibold text-slate-500">
+      <p className="status-copy">
         Sinonimoak bilatzen...
       </p>
     );
   }
 
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-500">Ez da emaitzarik aurkitu.</p>;
+    return <p className="status-copy">Ez da emaitzarik aurkitu.</p>;
   }
 
   const totalPages = Math.max(1, Math.ceil(rows.length / RESULTS_PAGE_SIZE));
@@ -273,8 +279,8 @@ const SynonymSearchResults: React.FC<{
 
   return (
     <div className="space-y-3">
-      <section className="surface-card p-4">
-        <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+      <section className="surface-card surface-card--muted p-4">
+        <p className="section-label">
           {rows.length} emaitza
         </p>
         {totalPages > 1 ? (
@@ -287,7 +293,7 @@ const SynonymSearchResults: React.FC<{
             >
               Aurrekoa
             </button>
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            <p className="section-label">
               Orria {safePage}/{totalPages}
             </p>
             <button
@@ -313,14 +319,14 @@ const SynonymSearchResults: React.FC<{
                 <button
                   type="button"
                   onClick={(event) => onOpenMeaning(row.hitza, event.currentTarget)}
-                  className="font-display border-0 bg-transparent p-0 text-[1.7rem] font-semibold text-left text-slate-900 transition hover:text-teal-700"
+                  className="word-link"
                   title="Esanahia ikusi"
                 >
                   {row.hitza}
                 </button>
                 <span
                   className={
-                    'mt-2 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
+                    'level-pill mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
                     levelBadgeClass(row.level)
                   }
                 >
@@ -331,12 +337,7 @@ const SynonymSearchResults: React.FC<{
                 type="button"
                 onClick={() => onSave(row)}
                 disabled={savedToday || saving}
-                className={
-                  'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-                  (savedToday || saving
-                    ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300')
-                }
+                className={accentActionClass(savedToday || saving)}
               >
                 {savedToday ? 'Gaur gordeta' : saving ? 'Gordetzen...' : 'Gogokoetara'}
               </button>
@@ -348,7 +349,7 @@ const SynonymSearchResults: React.FC<{
                   key={`${row.id}-${synonym}-${synonymIndex}`}
                   type="button"
                   onClick={(event) => onOpenMeaning(synonym, event.currentTarget)}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-700"
+                  className="term-chip"
                   title="Esanahia ikusi"
                 >
                   {synonym}
@@ -386,7 +387,7 @@ const MeaningSearchResults: React.FC<{
 }) => {
   if (!isTermReady(searchTerm)) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="status-copy">
         Idazten hasi esanahia bilatzeko.
       </p>
     );
@@ -394,7 +395,7 @@ const MeaningSearchResults: React.FC<{
 
   if (isMeaningLoading) {
     return (
-      <p className="text-sm font-semibold text-slate-500">
+      <p className="status-copy">
         Esanahiak bilatzen...
       </p>
     );
@@ -403,7 +404,7 @@ const MeaningSearchResults: React.FC<{
   if (meaningRows.length === 0) {
     return (
       <article className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="text-sm font-semibold text-slate-600">
+        <p className="status-copy">
           Ez da tokiko hiztegian esanahirik aurkitu.
         </p>
         {fallbackUrl ? (
@@ -427,8 +428,8 @@ const MeaningSearchResults: React.FC<{
 
   return (
     <div className="space-y-3">
-      <section className="surface-card p-4">
-        <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+      <section className="surface-card surface-card--muted p-4">
+        <p className="section-label">
           {meaningRows.length} emaitza
         </p>
         {totalPages > 1 ? (
@@ -441,7 +442,7 @@ const MeaningSearchResults: React.FC<{
             >
               Aurrekoa
             </button>
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            <p className="section-label">
               Orria {safePage}/{totalPages}
             </p>
             <button
@@ -463,24 +464,19 @@ const MeaningSearchResults: React.FC<{
           return (
             <article key={`${row.hitza}-${index}`} className="surface-card p-4 md:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h3 className="font-display text-[1.7rem] font-semibold text-slate-900">
+                <h3 className="word-title">
                   {row.hitza}
                 </h3>
                 <button
                   type="button"
                   onClick={() => onSave(row.hitza, row.esanahia)}
                   disabled={savedToday || saving}
-                  className={
-                    'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-                    (savedToday || saving
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300')
-                  }
+                  className={accentActionClass(savedToday || saving)}
                 >
                   {savedToday ? 'Gaur gordeta' : saving ? 'Gordetzen...' : 'Gogokoetara'}
                 </button>
               </div>
-              <p className="mt-3 text-base leading-relaxed text-slate-700 md:text-lg">
+              <p className="meaning-copy mt-3">
                 {row.esanahia}
               </p>
             </article>
@@ -521,10 +517,10 @@ const FavoritesPanel: React.FC<{
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="section-label">Eguneko historia</p>
-          <h2 className="font-display mt-2 text-3xl font-semibold text-slate-900">
+          <h2 className="panel-title mt-2">
             {historyDate}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="helper-note mt-1">
             {rows.length} hitz gordeta.
           </p>
         </div>
@@ -549,7 +545,7 @@ const FavoritesPanel: React.FC<{
 
     <section className="surface-card p-4">
       <label className="block">
-        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+        <span className="field-label">
           Gogokoetan bilatu
         </span>
         <input
@@ -564,15 +560,15 @@ const FavoritesPanel: React.FC<{
 
     {isLoading ? (
       <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="text-sm text-slate-600">Gogokoak Supabasetik kargatzen...</p>
+        <p className="status-copy">Gogokoak Supabasetik kargatzen...</p>
       </section>
     ) : syncError ? (
       <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="text-sm text-rose-600">{syncError}</p>
+        <p className="notice notice--error">{syncError}</p>
       </section>
     ) : rows.length === 0 ? (
       <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="text-sm text-slate-600">
+        <p className="status-copy">
           Ez dago data honetarako hitz gordeturik.
         </p>
       </section>
@@ -582,10 +578,10 @@ const FavoritesPanel: React.FC<{
           <article key={entry.id} className="surface-card p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="font-display text-[1.7rem] font-semibold text-slate-900">
+                <h3 className="word-title">
                   {entry.word}
                 </h3>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <p className="section-label mt-1">
                   {entry.mode === 'meaning' ? 'Esanahia' : 'Sinonimoak'}
                 </p>
               </div>
@@ -593,7 +589,7 @@ const FavoritesPanel: React.FC<{
                 {entry.level ? (
                   <span
                     className={
-                      'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
+                      'level-pill inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
                       levelBadgeClass(entry.level)
                     }
                   >
@@ -603,7 +599,7 @@ const FavoritesPanel: React.FC<{
                 <button
                   type="button"
                   onClick={() => onStudyWord(entry.word, entry.mode)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] text-slate-600 transition hover:border-teal-300 hover:text-teal-700"
+                  className="action-pill action-pill--neutral"
                 >
                   Ikasi
                 </button>
@@ -611,12 +607,7 @@ const FavoritesPanel: React.FC<{
                   type="button"
                   onClick={() => onDeleteFavorite(entry)}
                   disabled={deletingFavoriteId === entry.id}
-                  className={
-                    'rounded-xl border px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] transition ' +
-                    (deletingFavoriteId === entry.id
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : 'border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300')
-                  }
+                  className={dangerActionClass(deletingFavoriteId === entry.id)}
                 >
                   {deletingFavoriteId === entry.id ? 'Ezabatzen...' : 'Ezabatu'}
                 </button>
@@ -624,7 +615,7 @@ const FavoritesPanel: React.FC<{
             </div>
 
             {entry.meaning ? (
-              <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-base">
+              <p className="meaning-copy mt-3 !text-sm md:!text-base">
                 {entry.meaning}
               </p>
             ) : null}
@@ -634,7 +625,7 @@ const FavoritesPanel: React.FC<{
                 {entry.synonyms.map((synonym, index) => (
                   <span
                     key={`${entry.id}-${synonym}-${index}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600"
+                    className="term-chip term-chip--static"
                   >
                     {synonym}
                   </span>
@@ -667,16 +658,16 @@ const AddSynonymPanel: React.FC<{
 }) => (
   <section className="surface-card p-4 md:p-5">
     <form onSubmit={onSubmit} className="space-y-4">
-      <p className="text-sm text-slate-600">
+      <p className="status-copy">
         Hitz berria sinonimoen hiztegian gehitu (beti <strong>1. mailan</strong>).
       </p>
-      <p className="text-xs text-slate-500">
+      <p className="helper-note">
         Sistemak automatikoki egiaztatzen du hitza jada badagoen sinonimoen
         hiztegi osoan.
       </p>
 
       <label className="block">
-        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+        <span className="field-label">
           Hitza
         </span>
         <input
@@ -690,7 +681,7 @@ const AddSynonymPanel: React.FC<{
       </label>
 
       <label className="block">
-        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+        <span className="field-label">
           Sinonimoak
         </span>
         <textarea
@@ -700,13 +691,13 @@ const AddSynonymPanel: React.FC<{
           className="input-shell min-h-24 resize-y"
           required
         />
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="helper-note mt-1">
           Banandu komaz, puntu eta komaz edo lerro-jauziez.
         </p>
       </label>
 
       {addError ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600">
+        <p className="notice notice--error">
           {addError}
         </p>
       ) : null}
@@ -1271,7 +1262,7 @@ export const DictionaryApp: React.FC = () => {
       topRightControl={
         <button
           onClick={logout}
-          className="btn-secondary !py-1.5 !px-3 !text-sm"
+          className="btn-secondary btn-secondary--compact"
           type="button"
         >
           {username} - Irten
@@ -1366,7 +1357,7 @@ export const DictionaryApp: React.FC = () => {
           }}
         >
           <div className="dictionary-flyout__header">
-            <strong className="font-display text-base text-slate-900">
+            <strong className="font-display flyout-term">
               {meaningFlyout.term}
             </strong>
             <button
