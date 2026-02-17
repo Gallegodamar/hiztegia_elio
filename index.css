@@ -186,7 +186,7 @@ button:disabled {
   margin: 0 auto;
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   border-radius: 2rem;
   border: 1px solid rgba(73, 126, 180, 0.32);
   background: linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%);
@@ -225,6 +225,7 @@ button:disabled {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   padding: 1.2rem calc(1.5rem + var(--sar)) 1.2rem calc(1.5rem + var(--sal));
+  padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
   background:
     linear-gradient(180deg, rgba(243, 251, 255, 0.58), rgba(225, 242, 255, 0.25)),
     radial-gradient(circle at 90% -20%, rgba(24, 118, 206, 0.1), transparent 52%);
@@ -243,6 +244,7 @@ button:disabled {
 }
 
 .app-shell__footer {
+  display: none;
   border-top: 1px solid var(--border-soft);
   background: rgba(235, 247, 255, 0.92);
   padding: 0.48rem calc(0.9rem + var(--sar)) max(var(--sab), 0.28rem)
@@ -254,9 +256,17 @@ button:disabled {
 }
 
 .app-shell__footer--taskbar {
-  position: relative;
-  z-index: 20;
+  display: flex;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 48;
+  height: calc(var(--bottom-nav-h) + var(--sab));
   padding: 0;
+  padding-bottom: var(--sab);
+  box-sizing: border-box;
+  align-items: flex-end;
   border-top: 0;
   background: transparent;
   backdrop-filter: none;
@@ -1380,16 +1390,15 @@ input[type='range']::-webkit-slider-thumb {
 
   .app-shell__content {
     padding: 1rem calc(1rem + var(--sar)) 1rem calc(1rem + var(--sal));
+    padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
   }
 
   .app-shell__content--dictionary {
     gap: 0.84rem;
-    padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
   }
 
   .app-shell__content--favorites {
     gap: 0.84rem;
-    padding-bottom: calc(var(--bottom-nav-h) + var(--sab));
   }
 
   .app-shell__footer {
@@ -1400,23 +1409,6 @@ input[type='range']::-webkit-slider-thumb {
 
   .app-shell__footer--menu {
     padding: 0;
-  }
-
-  .app-shell__footer--taskbar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 48;
-    height: calc(var(--bottom-nav-h) + var(--sab));
-    padding: 0;
-    padding-bottom: var(--sab);
-    box-sizing: border-box;
-    display: flex;
-    align-items: flex-end;
-    border-top: 0;
-    background: transparent;
-    backdrop-filter: none;
   }
 
   .app-shell__footer--ghost {
