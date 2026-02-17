@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DictionaryMeaning, SearchResultItem } from '../appTypes';
 import { DifficultyLevel } from '../types';
 import { AppShell } from './layout/AppShell';
@@ -69,8 +69,12 @@ type MeaningFlyout = {
   top: number;
 };
 
-const ScreenHeader: React.FC<{ title: string }> = ({
+const ScreenHeader: React.FC<{
+  title: string;
+  subtitle?: string;
+}> = ({
   title,
+  subtitle,
 }) => (
   <div className="elio-brand-header">
     <div className="elio-brand-header__main">
@@ -79,12 +83,10 @@ const ScreenHeader: React.FC<{ title: string }> = ({
       </div>
       <div className="min-w-0">
         <h1 className="display-title">{title}</h1>
+        {subtitle ? (
+          <p className="elio-brand-subtitle">{subtitle}</p>
+        ) : null}
       </div>
-    </div>
-    <div className="elio-brand-orbs" aria-hidden="true">
-      <span className="elio-brand-orb elio-brand-orb--sun" />
-      <span className="elio-brand-orb elio-brand-orb--leaf" />
-      <span className="elio-brand-orb elio-brand-orb--dot" />
     </div>
   </div>
 );
@@ -158,16 +160,21 @@ const LoginView: React.FC<{
   </AppShell>
 );
 
-const BookOpenIcon: React.FC<{ className?: string }> = ({ className }) => (
+const BookmarkStarIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     viewBox="0 0 24 24"
     className={className}
     aria-hidden="true"
     focusable="false"
   >
-    <path d="M12 6.8c-1.3-1.5-3.2-2.3-5.2-2.3H4v13.1h2.8c2 0 3.9.8 5.2 2.3" />
-    <path d="M12 6.8c1.3-1.5 3.2-2.3 5.2-2.3H20v13.1h-2.8c-2 0-3.9.8-5.2 2.3" />
-    <path d="M12 6.8v13.1" />
+    <path
+      className="bookmark-star-icon__bookmark"
+      d="M7.1 4.6h7.3c.9 0 1.6.7 1.6 1.6v12.1l-5.3-2.7-5.3 2.7V6.2c0-.9.7-1.6 1.7-1.6Z"
+    />
+    <path
+      className="bookmark-star-icon__star"
+      d="m17.9 3.8.7 1.4 1.6.2-1.1 1.1.3 1.6-1.5-.8-1.4.8.2-1.6-1.1-1.1 1.6-.2.7-1.4Z"
+    />
   </svg>
 );
 
@@ -182,16 +189,40 @@ const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const PlusCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
+const PlusIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     viewBox="0 0 24 24"
     className={className}
     aria-hidden="true"
     focusable="false"
   >
-    <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
-    <path d="M12 5v14" />
-    <path d="M5 12h14" />
+    <path d="M12 5.8v12.4" />
+    <path d="M5.8 12h12.4" />
+  </svg>
+);
+
+const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-4.4-4.4" />
+  </svg>
+);
+
+const MoreHorizontalIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle cx="6" cy="12" r="1.6" />
+    <circle cx="12" cy="12" r="1.6" />
+    <circle cx="18" cy="12" r="1.6" />
   </svg>
 );
 
@@ -207,31 +238,36 @@ const BottomTaskBar: React.FC<{
   return (
     <nav className="bottom-taskbar" aria-label="Nabigazio nagusia">
       <div className="bottom-taskbar__buttons">
-        {views.map((view) => {
+        {views.map((view, index) => {
           const label =
             view === 'dictionary'
               ? 'Hiztegia'
               : view === 'favorites'
                 ? 'Gogokoak'
                 : 'Sinonimoa gehitu';
+          const isActive = activeView === view;
 
           return (
-            <button
-              key={view}
-              type="button"
-              onClick={() => onChange(view)}
-              className={`${segmentedButtonClass(activeView === view)} bottom-taskbar__button`}
-              aria-label={label}
-              title={label}
-            >
-              {view === 'dictionary' ? (
-                <BookOpenIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
-              ) : view === 'favorites' ? (
-                <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
-              ) : (
-                <PlusCircleIcon className="bottom-taskbar__icon bottom-taskbar__icon--add" />
-              )}
-            </button>
+            <React.Fragment key={view}>
+              {index > 0 ? <span className="bottom-taskbar__separator" aria-hidden="true" /> : null}
+              <button
+                type="button"
+                onClick={() => onChange(view)}
+                className={`bottom-taskbar__button ${
+                  isActive ? 'bottom-taskbar__button--active' : 'bottom-taskbar__button--idle'
+                }`}
+                aria-label={label}
+                title={label}
+              >
+                {view === 'dictionary' ? (
+                  <BookmarkStarIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
+                ) : view === 'favorites' ? (
+                  <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
+                ) : (
+                  <PlusIcon className="bottom-taskbar__icon bottom-taskbar__icon--add" />
+                )}
+              </button>
+            </React.Fragment>
           );
         })}
       </div>
@@ -246,23 +282,25 @@ const DictionarySearchControls: React.FC<{
   onTerm: (value: string) => void;
 }> = ({ searchMode, searchTerm, onMode, onTerm }) => (
   <section className="surface-card search-controls p-4 md:p-5">
-    <div className="mb-3 grid grid-cols-2 gap-2">
+    <div className="search-tabs">
       <button
         type="button"
         onClick={() => onMode('synonyms')}
-        className={segmentedButtonClass(searchMode === 'synonyms')}
+        className={`search-tab ${searchMode === 'synonyms' ? 'search-tab--active' : ''}`}
       >
         Sinonimoak
       </button>
+      <span className="search-tabs__divider" aria-hidden="true" />
       <button
         type="button"
         onClick={() => onMode('meaning')}
-        className={segmentedButtonClass(searchMode === 'meaning')}
+        className={`search-tab ${searchMode === 'meaning' ? 'search-tab--active' : ''}`}
       >
         Esanahia
       </button>
     </div>
-    <div className="search-input-shell">
+    <div className="search-input-shell search-input-shell--leading">
+      <SearchIcon className="search-input-icon" />
       <input
         type="text"
         value={searchTerm}
@@ -272,7 +310,7 @@ const DictionarySearchControls: React.FC<{
             ? 'Idatzi hitz bat edo sinonimo bat...'
             : 'Idatzi hitz bat esanahia ikusteko...'
         }
-        className="input-shell input-shell--large input-shell--with-clear"
+        className="input-shell input-shell--large input-shell--with-clear input-shell--with-icon"
       />
       {searchTerm.trim().length > 0 ? (
         <button
@@ -282,9 +320,9 @@ const DictionarySearchControls: React.FC<{
           aria-label="Bilaketa garbitu"
           title="Garbitu"
         >
-          x
-        </button>
-      ) : null}
+            x
+          </button>
+        ) : null}
     </div>
   </section>
 );
@@ -845,6 +883,7 @@ export const DictionaryApp: React.FC = () => {
   const isAdminUser = username === 'admin';
 
   const currentDay = todayKey();
+  const todayFavoritesCount = favoritesByDate[currentDay]?.length ?? 0;
   const allDays = useMemo(
     () =>
       Object.keys(favoritesByDate)
@@ -1350,18 +1389,31 @@ export const DictionaryApp: React.FC = () => {
       header={
         <ScreenHeader
           title="Hiztegia"
+          subtitle={activeView === 'dictionary' ? `${todayFavoritesCount} hitz gordeta - Gaur` : undefined}
         />
       }
       topRightControl={
-        <button
-          onClick={logout}
-          className="user-avatar-button"
-          type="button"
-          title={`${username} - Irten`}
-          aria-label={`${username} - Irten`}
-        >
-          {userInitials}
-        </button>
+        activeView === 'dictionary' ? (
+          <button
+            onClick={logout}
+            className="header-more-button"
+            type="button"
+            title={`${username} - Irten`}
+            aria-label={`${username} - Irten`}
+          >
+            <MoreHorizontalIcon className="header-more-button__icon" />
+          </button>
+        ) : (
+          <button
+            onClick={logout}
+            className="user-avatar-button"
+            type="button"
+            title={`${username} - Irten`}
+            aria-label={`${username} - Irten`}
+          >
+            {userInitials}
+          </button>
+        )
       }
       footer={
         <BottomTaskBar
