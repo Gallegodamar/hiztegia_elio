@@ -263,6 +263,7 @@ button:disabled {
   right: var(--sar);
   bottom: 0;
   z-index: 48;
+  border-top: 0;
 
   height: var(--bottom-nav-h);
   padding-bottom: var(--sab);
@@ -284,9 +285,9 @@ button:disabled {
 
   height: calc(var(--bottom-nav-h) + var(--sab));
 
-  background: #f3f6fa;   /* mismo color que la barra */
-  backdrop-filter: none; /* opcional, evita transparencias */
-  border-top: 0;         /* 🔴 elimina la raya */
+  background: transparent;
+  backdrop-filter: none;
+  border-top: 0;
   z-index: -1;
 }
 
@@ -806,7 +807,8 @@ button:disabled {
   margin: 0 auto;
   width: min(560px, 100%);
   border: 1px solid rgba(214, 223, 232, 0.96);
-  border-bottom: 0;   /* 👈 importante */
+  border-top: 0;
+  border-bottom: 0; /* importante */
   border-radius: 1.6rem;
   background: #f3f6fa;
   box-shadow: none;
@@ -1517,6 +1519,7 @@ input[type='range']::-webkit-slider-thumb {
     margin: 0 auto;
     height: var(--bottom-nav-h);
     border: 1px solid rgba(212, 222, 233, 0.96);
+    border-top: 0;
     border-radius: 1.42rem;
     background: #f3f6fa;
     padding: 0.52rem 0.62rem;
@@ -1600,3 +1603,4 @@ input[type='range']::-webkit-slider-thumb {
 }
   
 }
+
