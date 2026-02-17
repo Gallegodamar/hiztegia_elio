@@ -45,7 +45,7 @@ body {
 }
 
 html {
-  background: #0f5dbf;
+  background: #f3f6fa;
   overscroll-behavior-y: none;
 }
 
@@ -274,7 +274,7 @@ button:disabled {
   align-items: flex-end;
   justify-content: center;
 
-  background: rgba(225, 242, 255, 0.96);
+  background: #f3f6fa;
 }
 
 .app-shell__footer--taskbar::before {
@@ -286,7 +286,7 @@ button:disabled {
 
   height: 100%;
 
-  background: rgba(225, 242, 255, 0.96);
+  background: #f3f6fa;
   backdrop-filter: none;
   border-top: 0;
   z-index: -1;
@@ -805,12 +805,12 @@ button:disabled {
 }
 
 .bottom-taskbar {
-  margin: 0 auto;
-  width: min(560px, 100%);
+  margin: 0;
+  width: 100%;
   border: 1px solid rgba(214, 223, 232, 0.96);
   border-top: 0;
   border-bottom: 0; /* importante */
-  border-radius: 1.6rem;
+  border-radius: 0;
   background: #f3f6fa;
   box-shadow: none;
 }
@@ -1516,12 +1516,12 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .bottom-taskbar {
-    width: calc(100% - 0.65rem);
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     height: auto;
     border: 1px solid rgba(212, 222, 233, 0.96);
     border-top: 0;
-    border-radius: 1.42rem;
+    border-radius: 0;
     background: #f3f6fa;
     padding: 0.36rem 0.62rem;
     box-shadow:
@@ -1604,4 +1604,3 @@ input[type='range']::-webkit-slider-thumb {
 }
   
 }
-
