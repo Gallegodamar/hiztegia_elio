@@ -46,6 +46,19 @@ const buildMeaningFallbackUrl = (term: string): string =>
 const isTermReady = (value: string): boolean =>
   value.trim().replace(/\*/g, '').length >= 1;
 
+const buildUserInitials = (rawUsername: string): string => {
+  const normalized = rawUsername.trim();
+  if (!normalized) return '?';
+
+  const tokens = normalized.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  if (tokens.length >= 2) {
+    return `${tokens[0][0]}${tokens[1][0]}`.toUpperCase();
+  }
+
+  const fallback = (tokens[0] ?? normalized).replace(/[^a-zA-Z0-9]/g, '');
+  return (fallback.slice(0, 2) || normalized.slice(0, 1)).toUpperCase();
+};
+
 type MeaningFlyout = {
   term: string;
   meaning: string | null;
@@ -62,13 +75,10 @@ const ScreenHeader: React.FC<{ title: string }> = ({
   <div className="elio-brand-header">
     <div className="elio-brand-header__main">
       <div className="elio-brand-icon-shell" aria-hidden="true">
-        <img src="/elio_favicon_64.png" alt="" className="elio-brand-icon" />
+        <img src="/elio_appstore_1024.png" alt="" className="elio-brand-icon" />
       </div>
       <div className="min-w-0">
         <h1 className="display-title">{title}</h1>
-        <p className="display-subtitle">
-          Sinonimoak, esanahiak eta eguneroko ikasketa leku berean.
-        </p>
       </div>
     </div>
     <div className="elio-brand-orbs" aria-hidden="true">
@@ -148,39 +158,86 @@ const LoginView: React.FC<{
   </AppShell>
 );
 
-const ViewSwitcher: React.FC<{
+const BookOpenIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 6.8c-1.3-1.5-3.2-2.3-5.2-2.3H4v13.1h2.8c2 0 3.9.8 5.2 2.3" />
+    <path d="M12 6.8c1.3-1.5 3.2-2.3 5.2-2.3H20v13.1h-2.8c-2 0-3.9.8-5.2 2.3" />
+    <path d="M12 6.8v13.1" />
+  </svg>
+);
+
+const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 20.7s-7.2-4.5-8.5-8.6c-.8-2.6.5-5.4 3.1-6.2 2.1-.7 4.4.2 5.4 2.1 1-1.9 3.3-2.8 5.4-2.1 2.6.8 3.9 3.6 3.1 6.2-1.3 4.1-8.5 8.6-8.5 8.6Z" />
+  </svg>
+);
+
+const PlusCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </svg>
+);
+
+const BottomTaskBar: React.FC<{
   activeView: ActiveView;
   onChange: (view: ActiveView) => void;
-  notice: string | null;
   isAdminUser: boolean;
-}> = ({ activeView, onChange, notice, isAdminUser }) => (
-  <section className="surface-card view-switcher p-4">
-    <div className="flex flex-wrap gap-2">
-      {(isAdminUser
-        ? (['dictionary', 'favorites', 'addSynonym'] as const)
-        : (['dictionary', 'favorites'] as const)
-      ).map((view) => (
-        <button
-          key={view}
-          type="button"
-          onClick={() => onChange(view)}
-          className={segmentedButtonClass(activeView === view)}
-        >
-          {view === 'dictionary'
-            ? 'Hiztegia'
-            : view === 'favorites'
-              ? 'Gogokoak'
-              : 'Sinonimoa gehitu'}
-        </button>
-      ))}
-    </div>
-    {notice ? (
-      <p className="notice notice--info mt-3">
-        {notice}
-      </p>
-    ) : null}
-  </section>
-);
+}> = ({ activeView, onChange, isAdminUser }) => {
+  const views = isAdminUser
+    ? (['dictionary', 'favorites', 'addSynonym'] as const)
+    : (['dictionary', 'favorites'] as const);
+
+  return (
+    <nav className="bottom-taskbar" aria-label="Nabigazio nagusia">
+      <div className="bottom-taskbar__buttons">
+        {views.map((view) => {
+          const label =
+            view === 'dictionary'
+              ? 'Hiztegia'
+              : view === 'favorites'
+                ? 'Gogokoak'
+                : 'Sinonimoa gehitu';
+
+          return (
+            <button
+              key={view}
+              type="button"
+              onClick={() => onChange(view)}
+              className={`${segmentedButtonClass(activeView === view)} bottom-taskbar__button`}
+              aria-label={label}
+              title={label}
+            >
+              {view === 'dictionary' ? (
+                <BookOpenIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
+              ) : view === 'favorites' ? (
+                <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
+              ) : (
+                <PlusCircleIcon className="bottom-taskbar__icon bottom-taskbar__icon--add" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
 
 const DictionarySearchControls: React.FC<{
   searchMode: SearchMode;
@@ -205,10 +262,6 @@ const DictionarySearchControls: React.FC<{
         Esanahia
       </button>
     </div>
-    <p className="helper-note mb-2">
-      Lehen letratik bertatik bilatzen da (adib. `a`, `a`-z hasten diren hitzak).
-      Amaiera bidez bilatzeko erabili `*`: adib. `*tasun`.
-    </p>
     <input
       type="text"
       value={searchTerm}
@@ -271,12 +324,9 @@ const SynonymSearchResults: React.FC<{
 
   return (
     <div className="space-y-3">
-      <section className="surface-card surface-card--muted p-4">
-        <p className="section-label">
-          {rows.length} emaitza
-        </p>
-        {totalPages > 1 ? (
-          <div className="mt-2 flex items-center justify-between gap-2">
+      {totalPages > 1 ? (
+        <section className="surface-card surface-card--muted p-3 results-pagination">
+          <div className="results-pagination__controls">
             <button
               type="button"
               onClick={() => onSynonymPageChange(safePage - 1)}
@@ -285,8 +335,9 @@ const SynonymSearchResults: React.FC<{
             >
               Aurrekoa
             </button>
-            <p className="section-label">
-              Orria {safePage}/{totalPages}
+            <p className="section-label results-pagination__meta">
+              <span>{rows.length} emaitza</span>
+              <span>{safePage}/{totalPages}</span>
             </p>
             <button
               type="button"
@@ -297,8 +348,14 @@ const SynonymSearchResults: React.FC<{
               Hurrengoa
             </button>
           </div>
-        ) : null}
-      </section>
+        </section>
+      ) : (
+        <section className="surface-card surface-card--muted p-3">
+          <p className="section-label">
+            {rows.length} emaitza
+          </p>
+        </section>
+      )}
 
       <section className="grid gap-3">
         {visibleRows.map((row, index) => {
@@ -412,12 +469,9 @@ const MeaningSearchResults: React.FC<{
 
   return (
     <div className="space-y-3">
-      <section className="surface-card surface-card--muted p-4">
-        <p className="section-label">
-          {meaningRows.length} emaitza
-        </p>
-        {totalPages > 1 ? (
-          <div className="mt-2 flex items-center justify-between gap-2">
+      {totalPages > 1 ? (
+        <section className="surface-card surface-card--muted p-3 results-pagination">
+          <div className="results-pagination__controls">
             <button
               type="button"
               onClick={() => onMeaningPageChange(safePage - 1)}
@@ -426,8 +480,9 @@ const MeaningSearchResults: React.FC<{
             >
               Aurrekoa
             </button>
-            <p className="section-label">
-              Orria {safePage}/{totalPages}
+            <p className="section-label results-pagination__meta">
+              <span>{meaningRows.length} emaitza</span>
+              <span>{safePage}/{totalPages}</span>
             </p>
             <button
               type="button"
@@ -438,8 +493,14 @@ const MeaningSearchResults: React.FC<{
               Hurrengoa
             </button>
           </div>
-        ) : null}
-      </section>
+        </section>
+      ) : (
+        <section className="surface-card surface-card--muted p-3">
+          <p className="section-label">
+            {meaningRows.length} emaitza
+          </p>
+        </section>
+      )}
 
       <section className="grid gap-3">
         {visibleRows.map((row, index) => {
@@ -530,120 +591,118 @@ const FavoritesPanel: React.FC<{
   onDeleteFavorite,
   onStudyWord,
 }) => (
-  <div className="space-y-4">
-    <section className="surface-card p-4 md:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="section-label">Eguneko historia</p>
-          <h2 className="panel-title mt-2">
-            {historyDate}
-          </h2>
-          <p className="helper-note mt-1">
+  <div className="favorites-view">
+    <div className="favorites-view__controls">
+      <section className="surface-card p-4 md:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="helper-note !m-0">
             {rows.length} hitz gordeta.
           </p>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={historyDate}
+              max={currentDay}
+              onChange={(event) => setHistoryDate(event.target.value)}
+              className="input-shell !w-auto !py-2 !text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setHistoryDate(currentDay)}
+              className="btn-secondary !py-2 !text-sm"
+            >
+              Gaur
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+      </section>
+
+      <section className="surface-card p-4">
+        <label className="block">
+          <span className="field-label">
+            Gogokoetan bilatu
+          </span>
           <input
-            type="date"
-            value={historyDate}
-            max={currentDay}
-            onChange={(event) => setHistoryDate(event.target.value)}
-            className="input-shell !w-auto !py-2 !text-sm"
+            type="text"
+            value={favoriteQuery}
+            onChange={(event) => onFavoriteQueryChange(event.target.value)}
+            placeholder="Hitzaren arabera iragazi..."
+            className="input-shell !py-2.5 !text-sm"
           />
-          <button
-            type="button"
-            onClick={() => setHistoryDate(currentDay)}
-            className="btn-secondary !py-2 !text-sm"
-          >
-            Gaur
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section className="surface-card p-4">
-      <label className="block">
-        <span className="field-label">
-          Gogokoetan bilatu
-        </span>
-        <input
-          type="text"
-          value={favoriteQuery}
-          onChange={(event) => onFavoriteQueryChange(event.target.value)}
-          placeholder="Hitzaren arabera iragazi..."
-          className="input-shell !py-2.5 !text-sm"
-        />
-      </label>
-    </section>
-
-    {isLoading ? (
-      <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="status-copy">Gogokoak Supabasetik kargatzen...</p>
+        </label>
       </section>
-    ) : syncError ? (
-      <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="notice notice--error">{syncError}</p>
-      </section>
-    ) : rows.length === 0 ? (
-      <section className="surface-card surface-card--muted p-4 md:p-5">
-        <p className="status-copy">
-          Ez dago data honetarako hitz gordeturik.
-        </p>
-      </section>
-    ) : (
-      <section className="grid gap-3">
-        {rows.map((entry) => (
-          <article key={entry.id} className="surface-card word-result-card p-4 md:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="word-title">
-                  {entry.word}
-                </h3>
-                <p className="section-label mt-1">
-                  {entry.mode === 'meaning' ? 'Esanahia' : 'Sinonimoak'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onStudyWord(entry.word, entry.mode)}
-                  className="action-pill action-pill--neutral"
-                >
-                  Ikasi
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteFavorite(entry)}
-                  disabled={deletingFavoriteId === entry.id}
-                  className={dangerActionClass(deletingFavoriteId === entry.id)}
-                >
-                  {deletingFavoriteId === entry.id ? 'Ezabatzen...' : 'Ezabatu'}
-                </button>
-              </div>
-            </div>
+    </div>
 
-            {entry.meaning ? (
-              <p className="meaning-copy mt-3 !text-sm md:!text-base">
-                {entry.meaning}
-              </p>
-            ) : null}
-
-            {entry.synonyms.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {entry.synonyms.map((synonym, index) => (
-                  <span
-                    key={`${entry.id}-${synonym}-${index}`}
-                    className="term-chip term-chip--static"
+    <div className="favorites-view__results custom-scrollbar">
+      {isLoading ? (
+        <section className="surface-card surface-card--muted p-4 md:p-5">
+          <p className="status-copy">Gogokoak Supabasetik kargatzen...</p>
+        </section>
+      ) : syncError ? (
+        <section className="surface-card surface-card--muted p-4 md:p-5">
+          <p className="notice notice--error">{syncError}</p>
+        </section>
+      ) : rows.length === 0 ? (
+        <section className="surface-card surface-card--muted p-4 md:p-5">
+          <p className="status-copy">
+            Ez dago data honetarako hitz gordeturik.
+          </p>
+        </section>
+      ) : (
+        <section className="grid gap-3">
+          {rows.map((entry) => (
+            <article key={entry.id} className="surface-card word-result-card p-4 md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="word-title">
+                    {entry.word}
+                  </h3>
+                  <p className="section-label mt-1">
+                    {entry.mode === 'meaning' ? 'Esanahia' : 'Sinonimoak'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onStudyWord(entry.word, entry.mode)}
+                    className="action-pill action-pill--neutral"
                   >
-                    {synonym}
-                  </span>
-                ))}
+                    Ikasi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteFavorite(entry)}
+                    disabled={deletingFavoriteId === entry.id}
+                    className={dangerActionClass(deletingFavoriteId === entry.id)}
+                  >
+                    {deletingFavoriteId === entry.id ? 'Ezabatzen...' : 'Ezabatu'}
+                  </button>
+                </div>
               </div>
-            ) : null}
-          </article>
-        ))}
-      </section>
-    )}
+
+              {entry.meaning ? (
+                <p className="meaning-copy mt-3 !text-sm md:!text-base">
+                  {entry.meaning}
+                </p>
+              ) : null}
+
+              {entry.synonyms.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {entry.synonyms.map((synonym, index) => (
+                    <span
+                      key={`${entry.id}-${synonym}-${index}`}
+                      className="term-chip term-chip--static"
+                    >
+                      {synonym}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </section>
+      )}
+    </div>
   </div>
 );
 
@@ -727,6 +786,10 @@ export const DictionaryApp: React.FC = () => {
   const [userKeyInput, setUserKeyInput] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const userInitials = useMemo(
+    () => (username ? buildUserInitials(username) : ''),
+    [username]
+  );
 
   const [activeView, setActiveView] = useState<ActiveView>('dictionary');
   const [searchMode, setSearchMode] = useState<SearchMode>('synonyms');
@@ -1270,57 +1333,76 @@ export const DictionaryApp: React.FC = () => {
       topRightControl={
         <button
           onClick={logout}
-          className="btn-secondary btn-secondary--compact"
+          className="user-avatar-button"
           type="button"
+          title={`${username} - Irten`}
+          aria-label={`${username} - Irten`}
         >
-          {username} - Irten
+          {userInitials}
         </button>
       }
-      contentClassName="mx-auto w-full max-w-5xl space-y-4"
+      footer={
+        <BottomTaskBar
+          activeView={activeView}
+          onChange={setActiveView}
+          isAdminUser={isAdminUser}
+        />
+      }
+      footerClassName="app-shell__footer--menu app-shell__footer--taskbar"
+      contentClassName={`mx-auto w-full max-w-5xl ${
+        activeView === 'dictionary'
+          ? 'app-shell__content--dictionary'
+          : activeView === 'favorites'
+            ? 'app-shell__content--favorites'
+            : 'space-y-4'
+      }`}
     >
-      <ViewSwitcher
-        activeView={activeView}
-        onChange={setActiveView}
-        notice={notice}
-        isAdminUser={isAdminUser}
-      />
+      {notice ? (
+        <p className="notice notice--info">
+          {notice}
+        </p>
+      ) : null}
 
       {activeView === 'dictionary' ? (
-        <div className="space-y-4">
-          <DictionarySearchControls
-            searchMode={searchMode}
-            searchTerm={searchTerm}
-            onMode={setSearchMode}
-            onTerm={setSearchTerm}
-          />
+        <div className="dictionary-view">
+          <div className="dictionary-view__controls">
+            <DictionarySearchControls
+              searchMode={searchMode}
+              searchTerm={searchTerm}
+              onMode={setSearchMode}
+              onTerm={setSearchTerm}
+            />
+          </div>
 
-          {searchMode === 'synonyms' ? (
-            <SynonymSearchResults
-              searchTerm={searchTerm}
-              isSearching={isSearching}
-              rows={searchResults}
-              synonymPage={synonymPage}
-              onSynonymPageChange={setSynonymPage}
-              isSavedToday={isSavedToday}
-              isSavingWord={isSavingWord}
-              onSave={onSaveSynonymRow}
-              onOpenMeaning={openMeaningFlyout}
-            />
-          ) : (
-            <MeaningSearchResults
-              searchTerm={searchTerm}
-              isMeaningLoading={isMeaningLoading}
-              meaningRows={meaningRows}
-              fallbackUrl={meaningFallbackUrl}
-              meaningPage={meaningPage}
-              onMeaningPageChange={setMeaningPage}
-              isSavedToday={isSavedToday}
-              isSavingWord={isSavingWord}
-              onSave={(word, meaning) =>
-                saveFavorite({ word, mode: 'meaning', meaning })
-              }
-            />
-          )}
+          <div className="dictionary-view__results custom-scrollbar">
+            {searchMode === 'synonyms' ? (
+              <SynonymSearchResults
+                searchTerm={searchTerm}
+                isSearching={isSearching}
+                rows={searchResults}
+                synonymPage={synonymPage}
+                onSynonymPageChange={setSynonymPage}
+                isSavedToday={isSavedToday}
+                isSavingWord={isSavingWord}
+                onSave={onSaveSynonymRow}
+                onOpenMeaning={openMeaningFlyout}
+              />
+            ) : (
+              <MeaningSearchResults
+                searchTerm={searchTerm}
+                isMeaningLoading={isMeaningLoading}
+                meaningRows={meaningRows}
+                fallbackUrl={meaningFallbackUrl}
+                meaningPage={meaningPage}
+                onMeaningPageChange={setMeaningPage}
+                isSavedToday={isSavedToday}
+                isSavingWord={isSavingWord}
+                onSave={(word, meaning) =>
+                  saveFavorite({ word, mode: 'meaning', meaning })
+                }
+              />
+            )}
+          </div>
         </div>
       ) : activeView === 'favorites' ? (
         <FavoritesPanel
