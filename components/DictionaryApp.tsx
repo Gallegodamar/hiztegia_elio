@@ -40,13 +40,6 @@ const accentActionClass = (isDisabled: boolean): string =>
 const dangerActionClass = (isDisabled: boolean): string =>
   `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--danger'}`;
 
-const levelBadgeClass = (level: DifficultyLevel): string => {
-  if (level === 1) return 'level-pill--1';
-  if (level === 2) return 'level-pill--2';
-  if (level === 3) return 'level-pill--3';
-  return 'level-pill--4';
-};
-
 const buildMeaningFallbackUrl = (term: string): string =>
   `https://hiztegiak.elhuyar.eus/eu/${encodeURIComponent(term)}`;
 
@@ -72,7 +65,6 @@ const ScreenHeader: React.FC<{ title: string }> = ({
         <img src="/elio_favicon_64.png" alt="" className="elio-brand-icon" />
       </div>
       <div className="min-w-0">
-        <p className="elio-kicker">Hiztegia Elio</p>
         <h1 className="display-title">{title}</h1>
         <p className="display-subtitle">
           Sinonimoak, esanahiak eta eguneroko ikasketa leku berean.
@@ -313,7 +305,7 @@ const SynonymSearchResults: React.FC<{
         const savedToday = isSavedToday(row.hitza);
         const saving = isSavingWord(row.hitza);
         return (
-          <article key={`${row.id}-${index}`} className="surface-card p-4 md:p-5">
+          <article key={`${row.id}-${index}`} className="surface-card word-result-card p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <button
@@ -324,14 +316,6 @@ const SynonymSearchResults: React.FC<{
                 >
                   {row.hitza}
                 </button>
-                <span
-                  className={
-                    'level-pill mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
-                    levelBadgeClass(row.level)
-                  }
-                >
-                  Maila {row.level}
-                </span>
               </div>
               <button
                 type="button"
@@ -461,24 +445,58 @@ const MeaningSearchResults: React.FC<{
         {visibleRows.map((row, index) => {
           const savedToday = isSavedToday(row.hitza);
           const saving = isSavingWord(row.hitza);
+          const definitionParagraphs =
+            row.definizioak.length > 0
+              ? row.definizioak
+              : row.esanahia.trim()
+                ? [row.esanahia.trim()]
+                : [];
           return (
-            <article key={`${row.hitza}-${index}`} className="surface-card p-4 md:p-5">
+            <article key={`${row.hitza}-${index}`} className="surface-card word-result-card p-4 md:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h3 className="word-title">
-                  {row.hitza}
-                </h3>
+                <div>
+                  <h3 className="word-title">
+                    {row.hitza}
+                  </h3>
+                  {row.sinonimoak.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {row.sinonimoak.map((synonym, synonymIndex) => (
+                        <span
+                          key={`${row.hitza}-${synonym}-${synonymIndex}`}
+                          className="term-chip term-chip--static"
+                        >
+                          {synonym}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
                 <button
                   type="button"
-                  onClick={() => onSave(row.hitza, row.esanahia)}
+                  onClick={() =>
+                    onSave(
+                      row.hitza,
+                      definitionParagraphs.length > 0
+                        ? definitionParagraphs.join('\n\n')
+                        : row.esanahia
+                    )
+                  }
                   disabled={savedToday || saving}
                   className={accentActionClass(savedToday || saving)}
                 >
                   {savedToday ? 'Gaur gordeta' : saving ? 'Gordetzen...' : 'Gogokoetara'}
                 </button>
               </div>
-              <p className="meaning-copy mt-3">
-                {row.esanahia}
-              </p>
+              {definitionParagraphs.map((definition, definitionIndex) => (
+                <p
+                  key={`${row.hitza}-definition-${definitionIndex}`}
+                  className={
+                    `meaning-copy ${definitionIndex === 0 ? 'mt-3' : 'mt-2'}`
+                  }
+                >
+                  {definition}
+                </p>
+              ))}
             </article>
           );
         })}
@@ -575,7 +593,7 @@ const FavoritesPanel: React.FC<{
     ) : (
       <section className="grid gap-3">
         {rows.map((entry) => (
-          <article key={entry.id} className="surface-card p-4 md:p-5">
+          <article key={entry.id} className="surface-card word-result-card p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="word-title">
@@ -586,16 +604,6 @@ const FavoritesPanel: React.FC<{
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {entry.level ? (
-                  <span
-                    className={
-                      'level-pill inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ' +
-                      levelBadgeClass(entry.level)
-                    }
-                  >
-                    Maila {entry.level}
-                  </span>
-                ) : null}
                 <button
                   type="button"
                   onClick={() => onStudyWord(entry.word, entry.mode)}
