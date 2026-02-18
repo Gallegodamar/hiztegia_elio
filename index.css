@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=Rubik:wght@600;700;800&display=swap');
+@import "tailwindcss";
 
 :root {
   --sat: env(safe-area-inset-top);
@@ -805,12 +806,12 @@ button:disabled {
 .bottom-taskbar__buttons {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.4rem;
 }
 
 .bottom-taskbar__separator {
   width: 1px;
-  height: 2.35rem;
+  height: 1.5rem;
   background: rgba(185, 199, 214, 0.72);
   flex: 0 0 1px;
 }
@@ -821,10 +822,10 @@ button:disabled {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 3.05rem;
-  padding: 0.58rem;
+  min-height: 2rem;
+  padding: 0.3rem;
   border: 1px solid rgba(205, 217, 230, 0.92);
-  border-radius: 1.02rem;
+  border-radius: 0.7rem;
   background: #edf3f8;
   color: #5c85b6;
   text-align: center;
@@ -852,8 +853,8 @@ button:disabled {
 }
 
 .bottom-taskbar__icon {
-  width: 1.56rem;
-  height: 1.56rem;
+  width: 1.2rem;
+  height: 1.2rem;
   display: block;
   color: currentColor;
 }
@@ -1491,7 +1492,7 @@ input[type='range']::-webkit-slider-thumb {
     border: 0;
     border-radius: 0;
     background: #f3f6fa;
-    padding: 0.36rem 0.62rem;
+    padding: 0.2rem 0.5rem;
     box-shadow: none;
   }
 
@@ -1520,21 +1521,21 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .bottom-taskbar__buttons {
-    gap: 0.55rem;
+    gap: 0.4rem;
   }
 
   .bottom-taskbar__button {
-    min-height: 2.52rem;
-    padding: 0.42rem;
+    min-height: 2rem;
+    padding: 0.3rem;
   }
 
   .bottom-taskbar__icon {
-    width: 1.32rem;
-    height: 1.32rem;
+    width: 1.2rem;
+    height: 1.2rem;
   }
 
   .bottom-taskbar__separator {
-    height: 2rem;
+    height: 1.5rem;
   }
 
   .btn-secondary--compact {
