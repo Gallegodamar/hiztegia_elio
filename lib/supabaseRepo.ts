@@ -73,29 +73,78 @@ const normalizeSearchTerm = (value: string): string =>
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
 
+type SearchPatternMode = 'prefix' | 'suffix' | 'contains';
+
+const normalizedTextMatchesMode = (
+  normalizedCandidate: string,
+  normalizedToken: string,
+  matchMode: SearchPatternMode
+): boolean => {
+  if (!normalizedCandidate) return false;
+  if (matchMode === 'contains') {
+    return normalizedCandidate.includes(normalizedToken);
+  }
+  if (matchMode === 'suffix') {
+    return normalizedCandidate.endsWith(normalizedToken);
+  }
+  return normalizedCandidate.startsWith(normalizedToken);
+};
+
+const parseSearchPattern = (
+  rawTerm: string
+): { token: string; matchMode: SearchPatternMode } | null => {
+  const normalizedTerm = rawTerm.trim().toLowerCase();
+  if (!normalizedTerm) return null;
+
+  const hasLeadingWildcard = normalizedTerm.startsWith('*');
+  const hasTrailingWildcard = normalizedTerm.endsWith('*');
+
+  let token = normalizedTerm;
+  let matchMode: SearchPatternMode = 'prefix';
+
+  if (hasLeadingWildcard && hasTrailingWildcard && normalizedTerm.length >= 2) {
+    matchMode = 'contains';
+    token = normalizedTerm.slice(1, -1).trim();
+  } else if (hasLeadingWildcard) {
+    matchMode = 'suffix';
+    token = normalizedTerm.slice(1).trim();
+  } else if (hasTrailingWildcard) {
+    token = normalizedTerm.slice(0, -1).trim();
+  }
+
+  const normalizedToken = token.replace(/\*/g, '').trim();
+  if (!normalizedToken) return null;
+
+  return { token: normalizedToken, matchMode };
+};
+
+const buildIlikePattern = (
+  token: string,
+  matchMode: SearchPatternMode
+): string => {
+  if (matchMode === 'contains') return `%${token}%`;
+  if (matchMode === 'suffix') return `%${token}`;
+  return `${token}%`;
+};
+
 const termMatchesMode = (
   candidate: string,
   normalizedToken: string,
-  isSuffixSearch: boolean
+  matchMode: SearchPatternMode
 ): boolean => {
   const normalizedCandidate = normalizeSearchTerm(candidate);
-  if (!normalizedCandidate) return false;
-  return isSuffixSearch
-    ? normalizedCandidate.endsWith(normalizedToken)
-    : normalizedCandidate.startsWith(normalizedToken);
+  return normalizedTextMatchesMode(normalizedCandidate, normalizedToken, matchMode);
 };
 
 export const searchWords = async (term: string): Promise<SearchResultItem[]> => {
-  const normalizedTerm = term.trim().toLowerCase();
-  if (!normalizedTerm) return [];
+  const parsedPattern = parseSearchPattern(term);
+  if (!parsedPattern) return [];
 
-  const isSuffixSearch = normalizedTerm.startsWith('*');
-  const token = normalizedTerm.replace(/\*/g, '').trim();
-  if (token.length < 1) return [];
+  const { token, matchMode } = parsedPattern;
   const normalizedToken = normalizeSearchTerm(token);
   if (!normalizedToken) return [];
 
-  const pattern = isSuffixSearch ? `%${token}` : `${token}%`;
+  const pattern = buildIlikePattern(token, matchMode);
   const selectColumns = 'source_id, hitza, sinonimoak, level';
 
   const { data: hitzaData, error: hitzaError } = await supabase
@@ -153,10 +202,10 @@ export const searchWords = async (term: string): Promise<SearchResultItem[]> => 
 
   const filteredRows = Array.from(merged.values())
     .filter((row) => {
-      if (termMatchesMode(row.hitza, normalizedToken, isSuffixSearch)) return true;
+      if (termMatchesMode(row.hitza, normalizedToken, matchMode)) return true;
       const synonyms = normalizeSynonyms(row.sinonimoak);
       return synonyms.some((synonym) =>
-        termMatchesMode(synonym, normalizedToken, isSuffixSearch)
+        termMatchesMode(synonym, normalizedToken, matchMode)
       );
     })
     .sort((a, b) => a.hitza.localeCompare(b.hitza, 'eu', { sensitivity: 'base' }))
@@ -844,7 +893,7 @@ const fetchDictionaryRowByColumn = async (
 const fetchDictionaryRowsByColumn = async (
   column: string,
   terms: string[],
-  options: { suffixSearch: boolean; limit: number }
+  options: { matchMode: SearchPatternMode; limit: number }
 ): Promise<Array<Record<string, unknown>> | null> => {
   if (isDictionaryTableUnavailable || invalidDictionaryWordColumns.has(column)) {
     return [];
@@ -854,7 +903,7 @@ const fetchDictionaryRowsByColumn = async (
   const collected: Array<Record<string, unknown>> = [];
 
   for (const term of terms) {
-    const pattern = options.suffixSearch ? `%${term}` : `${term}%`;
+    const pattern = buildIlikePattern(term, options.matchMode);
     const { data, error } = await supabasePublic
       .from('diccionario')
       .select('*')
@@ -1239,13 +1288,11 @@ export const searchDictionaryMeanings = async (
   term: string,
   limit = 200
 ): Promise<DictionaryMeaning[]> => {
-  const normalized = term.trim().toLowerCase();
-  if (!normalized) return [];
+  const parsedPattern = parseSearchPattern(term);
+  if (!parsedPattern) return [];
   if (isDictionaryTableUnavailable) return [];
 
-  const isSuffixSearch = normalized.startsWith('*');
-  const token = normalized.replace(/\*/g, '').trim();
-  if (!token) return [];
+  const { token, matchMode } = parsedPattern;
 
   const searchVariants = buildDictionarySearchVariants(token);
   if (searchVariants.length === 0) return [];
@@ -1275,7 +1322,7 @@ export const searchDictionaryMeanings = async (
     visitedColumns.add(column);
 
     const rows = await fetchDictionaryRowsByColumn(column, searchVariants, {
-      suffixSearch: isSuffixSearch,
+      matchMode,
       limit,
     });
     if (!rows || rows.length === 0) continue;
@@ -1292,9 +1339,11 @@ export const searchDictionaryMeanings = async (
       if (!hitza || !esanahia) continue;
 
       const normalizedWord = normalizeComparableText(hitza);
-      const matchesToken = isSuffixSearch
-        ? normalizedWord.endsWith(normalizedToken)
-        : normalizedWord.startsWith(normalizedToken);
+      const matchesToken = normalizedTextMatchesMode(
+        normalizedWord,
+        normalizedToken,
+        matchMode
+      );
       if (!matchesToken) continue;
 
       const mapKey = normalizeFavoriteWordKey(hitza);

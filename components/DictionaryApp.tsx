@@ -309,8 +309,8 @@ const DictionarySearchControls: React.FC<{
         onChange={(event) => onTerm(event.target.value)}
         placeholder={
           searchMode === 'synonyms'
-            ? 'Idatzi hitz bat edo sinonimo bat...'
-            : 'Idatzi hitz bat esanahia ikusteko...'
+            ? 'Idatzi hitz bat edo sinonimo bat (adib. *bar*)...'
+            : 'Idatzi hitz bat esanahia ikusteko (adib. *bar*)...'
         }
         className="input-shell input-shell--large input-shell--with-clear input-shell--with-icon"
       />
