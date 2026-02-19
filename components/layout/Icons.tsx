@@ -34,3 +34,30 @@ export const MoreHorizontalIcon: React.FC<{ className?: string }> = ({ className
     <circle cx="18" cy="12" r="1.6" />
   </svg>
 );
+
+export const GroupIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true" focusable="false">
+    <circle cx="9" cy="7.5" r="3" />
+    <path d="M3 19.5c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+    <circle cx="17" cy="7.5" r="2.5" />
+    <path d="M21 19.5c0-2.8-1.8-5.1-4.5-5.8" />
+  </svg>
+);
+
+export const StarIcon: React.FC<{ className?: string; filled?: boolean }> = ({ className, filled }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+    style={{ width: '1.1rem', height: '1.1rem', display: 'block' }}
+  >
+    <polygon
+      points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

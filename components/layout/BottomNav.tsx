@@ -1,18 +1,20 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { OpenBookIcon, HeartIcon, PlusIcon } from './Icons';
+import { OpenBookIcon, HeartIcon, PlusIcon, GroupIcon } from './Icons';
 
-type NavView = 'dictionary' | 'favorites' | 'addSynonym';
+type NavView = 'dictionary' | 'favorites' | 'organizers' | 'addSynonym';
 
 const viewRoutes: Record<NavView, string> = {
   dictionary: '/',
   favorites: '/favoritos',
+  organizers: '/antolatzaileak',
   addSynonym: '/admin',
 };
 
 const viewLabels: Record<NavView, string> = {
   dictionary: 'Hiztegia',
   favorites: 'Gogokoak',
+  organizers: 'Antolatzaileak',
   addSynonym: 'Sinonimoa gehitu',
 };
 
@@ -21,15 +23,17 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
   const location = useLocation();
 
   const views: NavView[] = isAdminUser
-    ? ['dictionary', 'favorites', 'addSynonym']
-    : ['dictionary', 'favorites'];
+    ? ['dictionary', 'favorites', 'organizers', 'addSynonym']
+    : ['dictionary', 'favorites', 'organizers'];
 
   const activeView: NavView =
     location.pathname === '/favoritos'
       ? 'favorites'
-      : location.pathname === '/admin'
-        ? 'addSynonym'
-        : 'dictionary';
+      : location.pathname === '/antolatzaileak'
+        ? 'organizers'
+        : location.pathname === '/admin'
+          ? 'addSynonym'
+          : 'dictionary';
 
   return (
     <nav className="bottom-taskbar" aria-label="Nabigazio nagusia">
@@ -52,6 +56,8 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
                   <OpenBookIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
                 ) : view === 'favorites' ? (
                   <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
+                ) : view === 'organizers' ? (
+                  <GroupIcon className="bottom-taskbar__icon bottom-taskbar__icon--organizers" />
                 ) : (
                   <PlusIcon className="bottom-taskbar__icon bottom-taskbar__icon--add" />
                 )}

@@ -26,6 +26,9 @@ const FavoritesPanel = lazy(() =>
 const AddSynonymPanel = lazy(() =>
   import('../components/admin/AddSynonymPanel').then((m) => ({ default: m.AddSynonymPanel }))
 );
+const OrganizersPanel = lazy(() =>
+  import('../components/organizers/OrganizersPanel').then((m) => ({ default: m.OrganizersPanel }))
+);
 
 const LoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center py-12">
@@ -37,6 +40,7 @@ const contentClassByPath: Record<string, string> = {
   '/': 'app-shell__content--dictionary',
   '/favoritos': 'app-shell__content--favorites',
   '/admin': 'space-y-4',
+  '/antolatzaileak': 'app-shell__content--organizers',
 };
 
 const AuthenticatedLayout: React.FC = () => {
@@ -95,6 +99,7 @@ const AuthenticatedLayout: React.FC = () => {
             path="/admin"
             element={isAdminUser ? <AddSynonymPanel /> : <Navigate to="/" replace />}
           />
+          <Route path="/antolatzaileak" element={<OrganizersPanel />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

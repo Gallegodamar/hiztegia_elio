@@ -8,3 +8,5 @@ export type DictionaryMeaning = {
   sinonimoak: string[];
   definizioak: string[];
 };
+
+export type OrganizerItem = Record<string, unknown>;

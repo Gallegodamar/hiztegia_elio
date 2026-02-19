@@ -246,6 +246,14 @@ button:disabled {
   gap: 1rem;
 }
 
+.app-shell__content--organizers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .app-shell__footer {
   display: none;
   border-top: 1px solid var(--border-soft);
@@ -878,6 +886,10 @@ button:disabled {
 
 .bottom-taskbar__icon--add {
   color: #24b874;
+}
+
+.bottom-taskbar__icon--organizers {
+  color: #9b6fc8;
 }
 
 .bottom-taskbar__button--active .bottom-taskbar__icon {

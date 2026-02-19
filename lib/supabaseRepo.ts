@@ -1,5 +1,5 @@
 import { DifficultyLevel } from '../types';
-import { DictionaryMeaning, SearchResultItem } from '../appTypes';
+import { DictionaryMeaning, OrganizerItem, SearchResultItem } from '../appTypes';
 import { supabase, supabasePublic } from '../supabase';
 import {
   FavoriteWord,
@@ -1644,4 +1644,70 @@ export const deleteFavoriteById = async (
     data: { deleted: (data ?? []).length > 0 },
     error: null,
   };
+};
+
+const normalizeOrganizerText = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+export const fetchAllOrganizers = async (): Promise<OrganizerItem[]> => {
+  const { data, error } = await supabasePublic
+    .from('organizer_data')
+    .select('id, mota, antolatzaileak, esanahia')
+    .order('mota', { ascending: true })
+    .order('antolatzaileak', { ascending: true })
+    .limit(500);
+
+  if (error || !data) return [];
+  return data as OrganizerItem[];
+};
+
+export const searchOrganizers = async (term: string): Promise<OrganizerItem[]> => {
+  const rows = await fetchAllOrganizers();
+  const normalized = normalizeOrganizerText(term.trim());
+  if (!normalized) return rows;
+
+  return rows.filter((row) =>
+    Object.values(row).some((value) => {
+      if (typeof value !== 'string') return false;
+      return normalizeOrganizerText(value).includes(normalized);
+    })
+  );
+};
+
+const ORGANIZER_FAVORITES_TABLE = 'user_organizer_favorites';
+
+export const fetchOrganizerFavoriteIds = async (username: string): Promise<Set<string>> => {
+  const normalizedUser = username.trim().toLowerCase();
+  if (!normalizedUser) return new Set();
+
+  const { data, error } = await supabase
+    .from(ORGANIZER_FAVORITES_TABLE)
+    .select('organizer_id')
+    .eq('user_name', normalizedUser);
+
+  if (error || !data) return new Set();
+  return new Set((data as { organizer_id: number }[]).map((row) => String(row.organizer_id)));
+};
+
+export const addOrganizerFavorite = async (username: string, organizerId: string): Promise<void> => {
+  const normalizedUser = username.trim().toLowerCase();
+  if (!normalizedUser) return;
+  await supabase.from(ORGANIZER_FAVORITES_TABLE).insert({
+    user_name: normalizedUser,
+    organizer_id: Number(organizerId),
+  });
+};
+
+export const removeOrganizerFavorite = async (username: string, organizerId: string): Promise<void> => {
+  const normalizedUser = username.trim().toLowerCase();
+  if (!normalizedUser) return;
+  await supabase
+    .from(ORGANIZER_FAVORITES_TABLE)
+    .delete()
+    .eq('user_name', normalizedUser)
+    .eq('organizer_id', Number(organizerId));
 };
