@@ -10,3 +10,21 @@ export type DictionaryMeaning = {
 };
 
 export type OrganizerItem = Record<string, unknown>;
+
+export type TopicSummary = {
+  id: number;
+  slug: string;
+  title: string;
+};
+
+export type TopicCategory = {
+  key: string;
+  label: string;
+  items: string[];
+};
+
+export type TopicDetail = {
+  slug: string;
+  title: string;
+  categories: TopicCategory[];
+};

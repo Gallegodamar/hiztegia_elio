@@ -1,35 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Hiztegia Elio
 
-# Run and deploy your AI Studio app
+Euskarazko hiztegi aplikazioa (esanahiak, sinonimoak, gogokoak, gaiak eta antolatzaileak), React + Vite + Supabase erabiliz.
 
-This contains everything you need to run your app locally.
+## Local setup
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Go06sT8ttOgxCZ7xzx8oc9gOj7mGGdYD
+**Prerequisites**
+- Node.js 20+
+- Supabase project bat (URL + anon key)
 
-## Run Locally
+1. Instalatu dependientziak:
+   - `npm install`
+2. Sortu `.env.local`:
+   - `VITE_SUPABASE_URL=...`
+   - `VITE_SUPABASE_ANON_KEY=...`
+3. Abiarazi garapenean:
+   - `npm run dev`
+4. Ekoizpen build-a:
+   - `npm run build`
+5. Testak:
+   - `npm test`
 
-**Prerequisites:**  Node.js
+## Supabase SQL scripts
 
+Exekutatu SQL editorrean:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. `supabase_favorites.sql`
+   - `user_access_keys`
+   - `syn_words`
+   - `user_favorite_words`
+   - `validate_user_key(...)`
+   - `add_synonym_word(...)`
+   - RLS politikak
 
-## Favorites setup
+2. `supabase_topics.sql`
+   - `get_topics()`
+   - `get_topic(p_slug text)`
 
-Run `supabase_favorites.sql` in your Supabase SQL editor to create:
-- `user_favorite_words`
-- `user_access_keys` + `validate_user_key(...)` for username/key validation
-- indexes + RLS policies for reading, inserting and deleting favorites
+## Auth notes
 
-After that, insert at least one user key in Supabase (example included at the end of `supabase_favorites.sql`).
-
-## Login behavior
-
-Dictionary login accepts:
-- Registered Supabase Auth users (`email + password`, or username transformed as `username@tuapp.local`)
-- Fallback key validation through `public.validate_user_key(...)` and `user_access_keys`
+- Login nagusia Supabase Auth da (`username@tuapp.local` edo email osoa).
+- Key fallback (`validate_user_key`) mantentzen da bilaketa-erabilerarako.
+- Gogokoak eta admin-ekintzak (sinonimo berriak gehitzea) erabiltzaile autentikatuentzako konfiguratu dira.

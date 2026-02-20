@@ -41,11 +41,9 @@ export const FavoritesPanel: React.FC = () => {
   }, [allDays, historyDate]);
 
   const onStudyWord = (word: string, mode: SearchMode) => {
-    // Navigate to search panel - state is managed via URL/router
-    navigate('/');
-    // The search term will be set by the router's state or query param if needed
-    // For now, we navigate and trust the user to search; a more complete impl would use URL search params
-    void word; void mode;
+    const query = `?q=${encodeURIComponent(word.trim())}`;
+    const targetRoute = mode === 'synonyms' ? '/sinonimoak' : '/';
+    navigate(`${targetRoute}${query}`);
   };
 
   const onDeleteFavorite = async (favorite: FavoriteWord) => {

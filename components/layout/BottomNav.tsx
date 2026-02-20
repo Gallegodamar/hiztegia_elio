@@ -1,18 +1,20 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { OpenBookIcon, HeartIcon, PlusIcon, GroupIcon } from './Icons';
+import { OpenBookIcon, HeartIcon, PlusIcon, GroupIcon, SearchIcon } from './Icons';
 
-type NavView = 'dictionary' | 'favorites' | 'organizers' | 'addSynonym';
+type NavView = 'dictionary' | 'synonyms' | 'favorites' | 'organizers' | 'addSynonym';
 
 const viewRoutes: Record<NavView, string> = {
   dictionary: '/',
+  synonyms: '/sinonimoak',
   favorites: '/favoritos',
   organizers: '/antolatzaileak',
   addSynonym: '/admin',
 };
 
 const viewLabels: Record<NavView, string> = {
-  dictionary: 'Hiztegia',
+  dictionary: 'Esanahia',
+  synonyms: 'Sinonimoak',
   favorites: 'Gogokoak',
   organizers: 'Antolatzaileak',
   addSynonym: 'Sinonimoa gehitu',
@@ -23,17 +25,19 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
   const location = useLocation();
 
   const views: NavView[] = isAdminUser
-    ? ['dictionary', 'favorites', 'organizers', 'addSynonym']
-    : ['dictionary', 'favorites', 'organizers'];
+    ? ['dictionary', 'synonyms', 'favorites', 'organizers', 'addSynonym']
+    : ['dictionary', 'synonyms', 'favorites', 'organizers'];
 
   const activeView: NavView =
-    location.pathname === '/favoritos'
-      ? 'favorites'
-      : location.pathname === '/antolatzaileak'
-        ? 'organizers'
-        : location.pathname === '/admin'
-          ? 'addSynonym'
-          : 'dictionary';
+    location.pathname === '/sinonimoak'
+      ? 'synonyms'
+      : location.pathname === '/favoritos'
+        ? 'favorites'
+        : location.pathname === '/antolatzaileak'
+          ? 'organizers'
+          : location.pathname === '/admin'
+            ? 'addSynonym'
+            : 'dictionary';
 
   return (
     <nav className="bottom-taskbar" aria-label="Nabigazio nagusia">
@@ -53,6 +57,8 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
                 title={viewLabels[view]}
               >
                 {view === 'dictionary' ? (
+                  <SearchIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
+                ) : view === 'synonyms' ? (
                   <OpenBookIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
                 ) : view === 'favorites' ? (
                   <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />

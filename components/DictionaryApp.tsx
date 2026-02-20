@@ -12,6 +12,7 @@ export const DictionaryApp: React.FC = () => {
         isLoggingIn={auth.isLoggingIn}
         error={auth.error}
         onLogin={auth.login}
+        onRegister={auth.register}
         onClearError={auth.clearError}
       />
     );

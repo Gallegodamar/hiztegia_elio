@@ -1,11 +1,10 @@
 import React from 'react';
 import { SearchResultItem } from '../../appTypes';
 import { isTermReady } from '../../hooks/useSearch';
+import { DailyWordCard } from './DailyWordCard';
+import { HeartIcon } from '../layout/Icons';
 
 const RESULTS_PAGE_SIZE = 10;
-
-const accentActionClass = (isDisabled: boolean): string =>
-  `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--accent'}`;
 
 type SynonymResultsProps = {
   searchTerm: string;
@@ -16,6 +15,7 @@ type SynonymResultsProps = {
   isSavedToday: (word: string) => boolean;
   isSavingWord: (word: string) => boolean;
   onSave: (row: SearchResultItem) => void;
+  onSaveDailySynonym: (word: string, synonyms: string[]) => Promise<void> | void;
   onOpenMeaning: (term: string, anchorEl: HTMLElement) => void;
   onSearchWord: (word: string) => void;
 };
@@ -29,11 +29,19 @@ export const SynonymResults: React.FC<SynonymResultsProps> = ({
   isSavedToday,
   isSavingWord,
   onSave,
+  onSaveDailySynonym,
   onOpenMeaning,
   onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
-    return <p className="status-copy">Idazten hasi bilatzeko.</p>;
+    return (
+      <DailyWordCard
+        mode="synonyms"
+        isSavedToday={isSavedToday}
+        isSavingWord={isSavingWord}
+        onSaveSynonym={onSaveDailySynonym}
+      />
+    );
   }
   if (isSearching) {
     return <p className="status-copy">Sinonimoak bilatzen...</p>;
@@ -101,9 +109,20 @@ export const SynonymResults: React.FC<SynonymResultsProps> = ({
                   type="button"
                   onClick={() => onSave(row)}
                   disabled={savedToday || saving}
-                  className={accentActionClass(savedToday || saving)}
+                  aria-label={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
+                  title={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
+                  style={{
+                    flexShrink: 0,
+                    background: 'none',
+                    border: 'none',
+                    padding: '0.3rem',
+                    cursor: savedToday || saving ? 'default' : 'pointer',
+                    color: savedToday ? '#ee88a8' : 'var(--muted-1)',
+                    opacity: saving ? 0.5 : 1,
+                    transition: 'color 0.18s ease, transform 0.18s ease',
+                  }}
                 >
-                  {savedToday ? 'Gaur gordeta' : saving ? 'Gordetzen...' : 'Gogokoetara'}
+                  <HeartIcon filled={savedToday} className={`bottom-taskbar__icon ${savedToday ? 'bottom-taskbar__icon--favorites' : ''}`} />
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

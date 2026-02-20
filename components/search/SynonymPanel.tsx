@@ -3,26 +3,41 @@ import { useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
 import { useSearch } from '../../hooks/useSearch';
 import { useFavoritesData } from '../../hooks/useFavoritesData';
-import { MeaningResults } from './MeaningResults';
+import { SynonymResults } from './SynonymResults';
+import { MeaningFlyout } from './MeaningFlyout';
 import { SearchIcon } from '../layout/Icons';
+import { SearchResultItem } from '../../appTypes';
 
-export const SearchPanel: React.FC = () => {
+export const SynonymPanel: React.FC = () => {
   const { username, showNotice } = useAppContext();
-  const search = useSearch();
+  const search = useSearch('synonyms');
+  const { setSearchTerm } = search;
   const favorites = useFavoritesData(username);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const queryTerm = searchParams.get('q');
-    if (queryTerm && queryTerm.trim()) {
-      search.setSearchTerm(queryTerm.trim());
-      setSearchParams({}, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!queryTerm || !queryTerm.trim()) return;
+    setSearchTerm(queryTerm.trim());
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, setSearchTerm]);
 
-  const onSaveMeaningWord = async (word: string, meaning: string) => {
-    const notice = await favorites.saveFavorite({ word, mode: 'meaning', meaning });
+  const onSaveSynonymRow = async (row: SearchResultItem) => {
+    const notice = await favorites.saveFavorite({
+      word: row.hitza,
+      mode: 'synonyms',
+      synonyms: row.sinonimoak,
+      level: row.level,
+    });
+    if (notice) showNotice(notice);
+  };
+
+  const onSaveDailySynonym = async (word: string, synonyms: string[]) => {
+    const notice = await favorites.saveFavorite({
+      word,
+      mode: 'synonyms',
+      synonyms,
+    });
     if (notice) showNotice(notice);
   };
 
@@ -36,7 +51,7 @@ export const SearchPanel: React.FC = () => {
               type="text"
               value={search.searchTerm}
               onChange={(e) => search.setSearchTerm(e.target.value)}
-              placeholder="Idatzi hitz bat esanahia ikusteko (adib. *bar*)..."
+              placeholder="Idatzi hitz bat edo sinonimo bat (adib. *bar*)..."
               className="input-shell input-shell--large input-shell--with-clear input-shell--with-icon"
             />
             {search.searchTerm.trim().length > 0 ? (
@@ -55,19 +70,28 @@ export const SearchPanel: React.FC = () => {
       </div>
 
       <div className="dictionary-view__results custom-scrollbar">
-        <MeaningResults
+        <SynonymResults
           searchTerm={search.searchTerm}
-          isMeaningLoading={search.isMeaningLoading}
-          meaningRows={search.meaningRows}
-          fallbackUrl={search.meaningFallbackUrl}
-          meaningPage={search.meaningPage}
-          onMeaningPageChange={search.setMeaningPage}
+          isSearching={search.isSynonymSearching}
+          rows={search.synonymResults}
+          synonymPage={search.synonymPage}
+          onSynonymPageChange={search.setSynonymPage}
           isSavedToday={favorites.isSavedToday}
           isSavingWord={favorites.isSavingWord}
-          onSave={onSaveMeaningWord}
-          onSearchWord={search.searchMeaningWord}
+          onSave={onSaveSynonymRow}
+          onSaveDailySynonym={onSaveDailySynonym}
+          onOpenMeaning={search.openMeaningFlyout}
+          onSearchWord={(word) => search.studyWord(word, 'synonyms')}
         />
       </div>
+
+      {search.flyout ? (
+        <MeaningFlyout
+          flyout={search.flyout}
+          flyoutRef={search.flyoutRef}
+          onClose={search.closeFlyout}
+        />
+      ) : null}
     </div>
   );
 };

@@ -90,9 +90,10 @@ create or replace function public.add_synonym_word(p_word text, p_synonyms text[
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = public, extensions, pg_catalog
 as $$
 declare
+  v_actor_username text;
   v_word text;
   v_synonyms text[];
   v_duplicate boolean;
@@ -108,6 +109,22 @@ declare
   v_source_id_text text;
   v_search_text text;
 begin
+  v_actor_username := lower(
+    split_part(
+      coalesce(auth.jwt() ->> 'email', ''),
+      '@',
+      1
+    )
+  );
+
+  if v_actor_username <> 'admin' then
+    return jsonb_build_object(
+      'ok', false,
+      'reason', 'forbidden',
+      'message', 'Admin baimena behar da sinonimo berriak gehitzeko.'
+    );
+  end if;
+
   v_word := lower(trim(coalesce(p_word, '')));
   if char_length(v_word) < 1 then
     return jsonb_build_object(
@@ -311,7 +328,7 @@ end;
 $$;
 
 grant execute on function public.add_synonym_word(text, text[])
-  to anon, authenticated;
+  to authenticated;
 
 create table if not exists public.user_favorite_words (
   id bigint generated always as identity primary key,
@@ -342,31 +359,37 @@ create index if not exists user_favorite_words_created_at_idx
 alter table public.user_favorite_words enable row level security;
 
 drop policy if exists "favorites read anon and authenticated" on public.user_favorite_words;
-create policy "favorites read anon and authenticated"
+drop policy if exists "favorites insert anon and authenticated" on public.user_favorite_words;
+drop policy if exists "favorites delete anon and authenticated" on public.user_favorite_words;
+drop policy if exists "favorites select own authenticated" on public.user_favorite_words;
+drop policy if exists "favorites insert own authenticated" on public.user_favorite_words;
+drop policy if exists "favorites delete own authenticated" on public.user_favorite_words;
+
+create policy "favorites select own authenticated"
   on public.user_favorite_words
   for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (
+    user_name = lower(split_part(coalesce(auth.jwt() ->> 'email', ''), '@', 1))
+  );
 
-drop policy if exists "favorites insert anon and authenticated" on public.user_favorite_words;
-create policy "favorites insert anon and authenticated"
+create policy "favorites insert own authenticated"
   on public.user_favorite_words
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
     char_length(trim(user_name)) >= 2
     and word_key = lower(trim(word_key))
     and mode in ('synonyms', 'meaning')
+    and user_name = lower(split_part(coalesce(auth.jwt() ->> 'email', ''), '@', 1))
   );
 
-drop policy if exists "favorites delete anon and authenticated" on public.user_favorite_words;
-create policy "favorites delete anon and authenticated"
+create policy "favorites delete own authenticated"
   on public.user_favorite_words
   for delete
-  to anon, authenticated
+  to authenticated
   using (
-    char_length(trim(user_name)) >= 2
-    and user_name = lower(trim(user_name))
+    user_name = lower(split_part(coalesce(auth.jwt() ->> 'email', ''), '@', 1))
   );
 
 -- Example user creation:

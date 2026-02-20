@@ -42,7 +42,7 @@ type SearchAction =
 
 const initialState: SearchState = {
   searchTerm: '',
-  searchMode: 'synonyms',
+  searchMode: 'meaning',
   synonymPage: 1,
   meaningPage: 1,
   flyout: null,
@@ -116,8 +116,11 @@ export type UseSearchResult = {
   reset: () => void;
 };
 
-export const useSearch = (): UseSearchResult => {
-  const [state, dispatch] = useReducer(searchReducer, initialState);
+export const useSearch = (defaultMode?: SearchMode): UseSearchResult => {
+  const [state, dispatch] = useReducer(
+    searchReducer,
+    defaultMode ? { ...initialState, searchMode: defaultMode } : initialState,
+  );
   const flyoutRef = useRef<HTMLDivElement | null>(null);
   const flyoutRequestRef = useRef(0);
   const autoFallbackTermKeyRef = useRef<string | null>(null);

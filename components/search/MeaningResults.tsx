@@ -1,11 +1,10 @@
 import React from 'react';
 import { DictionaryMeaning } from '../../appTypes';
 import { isTermReady } from '../../hooks/useSearch';
+import { TopicChips } from './TopicChips';
+import { HeartIcon } from '../layout/Icons';
 
 const RESULTS_PAGE_SIZE = 10;
-
-const accentActionClass = (isDisabled: boolean): string =>
-  `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--accent'}`;
 
 type MeaningResultsProps = {
   searchTerm: string;
@@ -33,7 +32,7 @@ export const MeaningResults: React.FC<MeaningResultsProps> = ({
   onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
-    return <p className="status-copy">Idazten hasi esanahia bilatzeko.</p>;
+    return <TopicChips />;
   }
   if (isMeaningLoading) {
     return <p className="status-copy">Esanahiak bilatzen...</p>;
@@ -131,9 +130,20 @@ export const MeaningResults: React.FC<MeaningResultsProps> = ({
                     )
                   }
                   disabled={savedToday || saving}
-                  className={accentActionClass(savedToday || saving)}
+                  aria-label={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
+                  title={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
+                  style={{
+                    flexShrink: 0,
+                    background: 'none',
+                    border: 'none',
+                    padding: '0.3rem',
+                    cursor: savedToday || saving ? 'default' : 'pointer',
+                    color: savedToday ? '#ee88a8' : 'var(--muted-1)',
+                    opacity: saving ? 0.5 : 1,
+                    transition: 'color 0.18s ease, transform 0.18s ease',
+                  }}
                 >
-                  {savedToday ? 'Gaur gordeta' : saving ? 'Gordetzen...' : 'Gogokoetara'}
+                  <HeartIcon filled={savedToday} className={`bottom-taskbar__icon ${savedToday ? 'bottom-taskbar__icon--favorites' : ''}`} />
                 </button>
               </div>
               {definitionParagraphs.map((definition, definitionIndex) => (

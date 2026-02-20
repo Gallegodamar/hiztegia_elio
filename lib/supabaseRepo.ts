@@ -1,5 +1,5 @@
 import { DifficultyLevel } from '../types';
-import { DictionaryMeaning, OrganizerItem, SearchResultItem } from '../appTypes';
+import { DictionaryMeaning, OrganizerItem, SearchResultItem, TopicSummary, TopicDetail } from '../appTypes';
 import { supabase, supabasePublic } from '../supabase';
 import {
   FavoriteWord,
@@ -262,7 +262,6 @@ export const signInWithRegisteredUser = async (
     ? [normalizedInput]
     : [`${normalizedInput}@tuapp.local`];
 
-  let lastInvalidCredentialError = false;
   for (const email of candidateEmails) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -283,7 +282,6 @@ export const signInWithRegisteredUser = async (
 
     if (!error) continue;
     if (isInvalidAuthCredentialsError(error)) {
-      lastInvalidCredentialError = true;
       continue;
     }
 
@@ -291,6 +289,37 @@ export const signInWithRegisteredUser = async (
   }
 
   return { ok: false, invalidCredentials: true };
+};
+
+export const signUpNewUser = async (
+  username: string,
+  password: string
+): Promise<RegisteredUserLoginResult> => {
+  const normalizedUser = username.trim().toLowerCase();
+  const trimmedPassword = password.trim();
+  if (!normalizedUser || normalizedUser.length < 2 || trimmedPassword.length < 6) {
+    return { ok: false, errorMessage: 'Erabiltzaileak gutxienez 2 karaktere eta pasahitzak 6 izan behar ditu.' };
+  }
+
+  const email = `${normalizedUser}@tuapp.local`;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: trimmedPassword,
+  });
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('already registered') || msg.includes('already been registered')) {
+      return { ok: false, errorMessage: 'Erabiltzaile hau dagoeneko erregistratuta dago.' };
+    }
+    return { ok: false, errorMessage: error.message };
+  }
+
+  if (!data.user) {
+    return { ok: false, errorMessage: 'Ezin izan da erabiltzailea sortu.' };
+  }
+
+  return { ok: true, normalizedUsername: normalizedUser };
 };
 
 export const signOutRegisteredUser = async (): Promise<void> => {
@@ -331,6 +360,7 @@ export type AddSynonymWordErrorReason =
   | 'duplicate'
   | 'missing_table'
   | 'missing_function'
+  | 'forbidden'
   | 'error';
 
 export type AddSynonymWordResult = {
@@ -391,6 +421,22 @@ export const addSynonymWord = async (
 
   if (error) {
     const message = error.message.toLowerCase();
+    const code = String((error as { code?: string }).code ?? '').toLowerCase();
+    const isForbiddenError =
+      code === '42501' ||
+      message.includes('permission denied') ||
+      message.includes('not allowed') ||
+      message.includes('row-level security');
+
+    if (isForbiddenError) {
+      return {
+        ok: false,
+        error: {
+          reason: 'forbidden',
+          message: 'Admin baimena behar da sinonimo berriak gehitzeko.',
+        },
+      };
+    }
     if (
       (message.includes('function') && message.includes('add_synonym_word')) ||
       (message.includes('could not find the function') &&
@@ -469,6 +515,15 @@ export const addSynonymWord = async (
       error: {
         reason: 'invalid',
         message: payload.message ?? 'Datuak ez dira baliozkoak.',
+      },
+    };
+  }
+  if (reason === 'forbidden') {
+    return {
+      ok: false,
+      error: {
+        reason: 'forbidden',
+        message: payload.message ?? 'Admin baimena behar da sinonimo berriak gehitzeko.',
       },
     };
   }
@@ -1409,9 +1464,81 @@ export const lookupDictionaryMeaning = async (
   return matches[0] ?? null;
 };
 
+export type DailyWord = {
+  hitza: string;
+  sinonimoak: string[];
+};
+
+export type DailyMeaning = {
+  hitza: string;
+  esanahia: string;
+};
+
+export const fetchDailyWord = async (): Promise<DailyWord | null> => {
+  const { count, error: countError } = await supabasePublic
+    .from('syn_words')
+    .select('*', { count: 'exact', head: true })
+    .eq('active', true);
+
+  if (countError || !count || count === 0) return null;
+
+  const day = Math.floor(Date.now() / 86_400_000);
+  const offset = day % count;
+
+  const { data, error } = await supabasePublic
+    .from('syn_words')
+    .select('hitza, sinonimoak')
+    .eq('active', true)
+    .order('hitza', { ascending: true })
+    .range(offset, offset);
+
+  if (error || !data || data.length === 0) return null;
+
+  const row = data[0] as { hitza: string; sinonimoak: unknown };
+  return {
+    hitza: row.hitza,
+    sinonimoak: normalizeSynonyms(row.sinonimoak),
+  };
+};
+
+export const fetchDailyMeaning = async (): Promise<DailyMeaning | null> => {
+  if (isDictionaryTableUnavailable) return null;
+
+  const wordCol = cachedDictionaryWordColumn ?? 'hitza';
+  const meaningCol = cachedDictionaryMeaningColumn ?? 'esanahia';
+
+  const { count, error: countError } = await supabasePublic
+    .from('diccionario')
+    .select('*', { count: 'exact', head: true });
+
+  if (countError || !count || count === 0) return null;
+
+  const day = Math.floor(Date.now() / 86_400_000);
+  const offset = day % count;
+
+  const { data, error } = await supabasePublic
+    .from('diccionario')
+    .select(`${wordCol}, ${meaningCol}`)
+    .order(wordCol, { ascending: true })
+    .range(offset, offset);
+
+  if (error || !data || data.length === 0) return null;
+
+  const row = data[0] as unknown as Record<string, unknown>;
+  const hitza = valueAsText(row[wordCol]);
+  const esanahia = valueAsText(row[meaningCol]);
+  if (!hitza || !esanahia) return null;
+
+  return { hitza, esanahia };
+};
+
 const FAVORITES_TABLE = 'user_favorite_words';
 
-export type FavoriteSyncErrorReason = 'missing_table' | 'duplicate' | 'error';
+export type FavoriteSyncErrorReason =
+  | 'missing_table'
+  | 'duplicate'
+  | 'unauthorized'
+  | 'error';
 
 export type FavoriteSyncError = {
   reason: FavoriteSyncErrorReason;
@@ -1468,6 +1595,18 @@ const sanitizeFavoriteSynonyms = (value: unknown): string[] => {
 const isMissingFavoritesTableError = (message: string): boolean =>
   message.includes('relation') && message.includes(FAVORITES_TABLE);
 
+const isFavoritesPermissionError = (
+  error: { message?: string; code?: string }
+): boolean => {
+  const code = String(error.code ?? '').toLowerCase();
+  const message = String(error.message ?? '').toLowerCase();
+  return (
+    code === '42501' ||
+    message.includes('permission denied') ||
+    message.includes('row-level security')
+  );
+};
+
 const mapFavoriteRow = (row: FavoriteWordRow): FavoriteWord => ({
   id: String(row.id),
   word: row.word.trim(),
@@ -1495,6 +1634,15 @@ export const fetchFavoritesByUsername = async (
 
   if (error) {
     const message = error.message.toLowerCase();
+    if (isFavoritesPermissionError(error)) {
+      return {
+        data: {},
+        error: {
+          reason: 'unauthorized',
+          message: 'Gogokoak kargatzeko saioa hasita egon behar da Supabase Auth bidez.',
+        },
+      };
+    }
     if (isMissingFavoritesTableError(message)) {
       return {
         data: {},
@@ -1578,6 +1726,15 @@ export const insertFavoriteByUsername = async (
         error: { reason: 'duplicate', message: 'Hitza gaur jada gordeta dago.' },
       };
     }
+    if (isFavoritesPermissionError(error)) {
+      return {
+        data: null,
+        error: {
+          reason: 'unauthorized',
+          message: 'Gogokoak gordetzeko saioa hasita egon behar da Supabase Auth bidez.',
+        },
+      };
+    }
     const message = error.message.toLowerCase();
     if (isMissingFavoritesTableError(message)) {
       return {
@@ -1625,6 +1782,15 @@ export const deleteFavoriteById = async (
 
   if (error) {
     const message = error.message.toLowerCase();
+    if (isFavoritesPermissionError(error)) {
+      return {
+        data: { deleted: false },
+        error: {
+          reason: 'unauthorized',
+          message: 'Gogokoak ezabatzeko saioa hasita egon behar da Supabase Auth bidez.',
+        },
+      };
+    }
     if (isMissingFavoritesTableError(message)) {
       return {
         data: { deleted: false },
@@ -1689,25 +1855,377 @@ export const fetchOrganizerFavoriteIds = async (username: string): Promise<Set<s
     .select('organizer_id')
     .eq('user_name', normalizedUser);
 
-  if (error || !data) return new Set();
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) return new Set();
   return new Set((data as { organizer_id: number }[]).map((row) => String(row.organizer_id)));
 };
 
 export const addOrganizerFavorite = async (username: string, organizerId: string): Promise<void> => {
   const normalizedUser = username.trim().toLowerCase();
   if (!normalizedUser) return;
-  await supabase.from(ORGANIZER_FAVORITES_TABLE).insert({
+  const { error } = await supabase.from(ORGANIZER_FAVORITES_TABLE).insert({
     user_name: normalizedUser,
     organizer_id: Number(organizerId),
   });
+  if (error) throw new Error(error.message);
 };
 
 export const removeOrganizerFavorite = async (username: string, organizerId: string): Promise<void> => {
   const normalizedUser = username.trim().toLowerCase();
   if (!normalizedUser) return;
-  await supabase
+  const { error } = await supabase
     .from(ORGANIZER_FAVORITES_TABLE)
     .delete()
     .eq('user_name', normalizedUser)
     .eq('organizer_id', Number(organizerId));
+  if (error) throw new Error(error.message);
+};
+
+// ─── Topics ──────────────────────────────────────────────────────────────────
+
+// Topics
+
+const TOPIC_ID_FIELD_CANDIDATES = ['id', 'topic_id', 'id_topic', 'topicid'];
+const TOPIC_SLUG_FIELD_CANDIDATES = ['slug', 'topic_slug', 'gaia_slug', 'name', 'title'];
+const TOPIC_TITLE_FIELD_CANDIDATES = ['title', 'name', 'gaia', 'topic', 'slug'];
+const TOPIC_CATEGORY_KEY_FIELD_CANDIDATES = ['key', 'category_key', 'category', 'code'];
+const TOPIC_CATEGORY_LABEL_FIELD_CANDIDATES = ['label', 'name', 'title', 'category_label'];
+const TOPIC_CATEGORY_ORDER_FIELD_CANDIDATES = ['order_index', 'position', 'sort_order', 'order'];
+const TOPIC_ITEM_TEXT_FIELD_CANDIDATES = ['item', 'text', 'value', 'word', 'term', 'hitza'];
+const TOPIC_ITEM_CATEGORY_FIELD_CANDIDATES = ['category', 'category_key', 'key', 'category_label', 'group'];
+const TOPIC_ITEM_CATEGORY_ID_FIELD_CANDIDATES = ['category_id', 'topic_category_id'];
+const TOPIC_ROW_TOPIC_ID_FIELD_CANDIDATES = ['topic_id', 'id_topic', 'topicid', 'topic'];
+const TOPIC_ROW_TOPIC_SLUG_FIELD_CANDIDATES = ['topic_slug', 'slug', 'topic', 'gaia', 'topic_name'];
+
+const readTopicText = (row: Record<string, unknown>, keys: string[]): string | null => {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return null;
+};
+
+const readTopicNumber = (row: Record<string, unknown>, keys: string[]): number | null => {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value !== 'string') continue;
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const normalizeTopicSlug = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\.(ts|tsx)$/i, '');
+
+const normalizeTopicSlugKey = (value: string): string =>
+  normalizeTopicSlug(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+
+const normalizeTopicToken = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+
+const mapTopicSummaries = (rows: Record<string, unknown>[]): TopicSummary[] => {
+  const map = new Map<string, TopicSummary>();
+
+  rows.forEach((row, index) => {
+    const slugRaw = readTopicText(row, TOPIC_SLUG_FIELD_CANDIDATES);
+    if (!slugRaw) return;
+    const slug = normalizeTopicSlug(slugRaw);
+    if (!slug) return;
+
+    const title = readTopicText(row, TOPIC_TITLE_FIELD_CANDIDATES) ?? slugRaw;
+    const id = readTopicNumber(row, TOPIC_ID_FIELD_CANDIDATES) ?? index + 1;
+    const cleanTitle = title.trim().replace(/\.(ts|tsx)$/i, '');
+
+    if (!map.has(slug)) {
+      map.set(slug, {
+        id,
+        slug,
+        title: cleanTitle || slug,
+      });
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.title.localeCompare(b.title, 'eu', { sensitivity: 'base' })
+  );
+};
+
+const rowHasAnyTopicField = (row: Record<string, unknown>, keys: string[]): boolean =>
+  keys.some((key) => row[key] !== undefined && row[key] !== null);
+
+const rowMatchesTopic = (
+  row: Record<string, unknown>,
+  topicId: number | null,
+  topicSlug: string,
+  topicTitle: string
+): boolean => {
+  const topicSlugKey = normalizeTopicSlugKey(topicSlug);
+  const topicTitleKey = normalizeTopicSlugKey(topicTitle);
+  const hasTopicIdRef = rowHasAnyTopicField(row, TOPIC_ROW_TOPIC_ID_FIELD_CANDIDATES);
+  const hasTopicSlugRef = rowHasAnyTopicField(row, TOPIC_ROW_TOPIC_SLUG_FIELD_CANDIDATES);
+
+  if (hasTopicIdRef && topicId !== null) {
+    const rowTopicId = readTopicNumber(row, TOPIC_ROW_TOPIC_ID_FIELD_CANDIDATES);
+    if (rowTopicId !== null && rowTopicId === topicId) return true;
+  }
+
+  if (hasTopicSlugRef) {
+    const rowTopicSlug = readTopicText(row, TOPIC_ROW_TOPIC_SLUG_FIELD_CANDIDATES);
+    if (!rowTopicSlug) return false;
+    const normalizedRefKey = normalizeTopicSlugKey(rowTopicSlug);
+    return normalizedRefKey === topicSlugKey || normalizedRefKey === topicTitleKey;
+  }
+
+  return !hasTopicIdRef && !hasTopicSlugRef;
+};
+
+const normalizeTopicFromRpc = (
+  payload: unknown,
+  normalizedSlug: string,
+  fallbackTitle: string | null
+): TopicDetail | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const parsed = payload as Partial<TopicDetail>;
+
+  const parsedSlug =
+    typeof parsed.slug === 'string' && parsed.slug.trim().length > 0
+      ? normalizeTopicSlug(parsed.slug)
+      : normalizedSlug;
+  const parsedTitle =
+    typeof parsed.title === 'string' && parsed.title.trim().length > 0
+      ? parsed.title.trim()
+      : fallbackTitle ?? normalizedSlug;
+
+  const parsedCategories = Array.isArray(parsed.categories)
+    ? parsed.categories
+        .map((category, index) => {
+          const key =
+            typeof category?.key === 'string' && category.key.trim().length > 0
+              ? category.key.trim()
+              : `category-${index + 1}`;
+          const label =
+            typeof category?.label === 'string' && category.label.trim().length > 0
+              ? category.label.trim()
+              : key;
+          const items = Array.isArray(category?.items)
+            ? category.items
+                .filter(
+                  (item): item is string =>
+                    typeof item === 'string' && item.trim().length > 0
+                )
+                .map((item) => item.trim())
+            : [];
+          return { key, label, items };
+        })
+        .filter((category) => category.label.trim().length > 0)
+    : [];
+
+  return {
+    slug: parsedSlug,
+    title: parsedTitle,
+    categories: parsedCategories,
+  };
+};
+
+const buildTopicDetailFromTables = async (
+  normalizedSlug: string,
+  fallbackTitle: string | null
+): Promise<TopicDetail | null> => {
+  const { data: topicsData, error: topicsError } = await supabase
+    .from('topics')
+    .select('*')
+    .limit(5000);
+
+  if (topicsError || !topicsData) return null;
+
+  const topicRows = topicsData as Record<string, unknown>[];
+  const topicSummaries = mapTopicSummaries(topicRows);
+  const normalizedSlugKey = normalizeTopicSlugKey(normalizedSlug);
+  const topicSummary =
+    topicSummaries.find((entry) => entry.slug === normalizedSlug) ??
+    topicSummaries.find((entry) => normalizeTopicSlugKey(entry.slug) === normalizedSlugKey);
+  if (!topicSummary) return null;
+
+  const topicRow =
+    topicRows.find((row) => {
+      const slugValue = readTopicText(row, TOPIC_SLUG_FIELD_CANDIDATES);
+      if (!slugValue) return false;
+      return normalizeTopicSlugKey(slugValue) === normalizedSlugKey;
+    }) ?? null;
+
+  const topicId = topicRow ? readTopicNumber(topicRow, TOPIC_ID_FIELD_CANDIDATES) : topicSummary.id;
+  const topicTitle = topicSummary.title;
+
+  const [rawCategoriesResult, rawItemsResult] = await Promise.all([
+    supabase.from('topic_categories').select('*').limit(20000),
+    supabase.from('topic_items').select('*').limit(50000),
+  ]);
+
+  const categoryRows =
+    rawCategoriesResult.error || !rawCategoriesResult.data
+      ? []
+      : (rawCategoriesResult.data as Record<string, unknown>[]);
+  const itemRows =
+    rawItemsResult.error || !rawItemsResult.data
+      ? []
+      : (rawItemsResult.data as Record<string, unknown>[]);
+
+  const filteredCategoryRows = categoryRows.filter((row) =>
+    rowMatchesTopic(row, topicId, normalizedSlug, topicTitle)
+  );
+  const filteredItemRows = itemRows.filter((row) =>
+    rowMatchesTopic(row, topicId, normalizedSlug, topicTitle)
+  );
+
+  const categoriesByToken = new Map<
+    string,
+    { key: string; label: string; order: number; items: Set<string> }
+  >();
+  const categoryIdToToken = new Map<number, string>();
+
+  filteredCategoryRows.forEach((row, index) => {
+    const keyRaw = readTopicText(row, TOPIC_CATEGORY_KEY_FIELD_CANDIDATES);
+    const labelRaw = readTopicText(row, TOPIC_CATEGORY_LABEL_FIELD_CANDIDATES);
+    const normalizedToken = normalizeTopicToken(keyRaw ?? labelRaw ?? `category-${index + 1}`);
+    if (!normalizedToken) return;
+
+    const key = keyRaw?.trim() || normalizedToken;
+    const label = (labelRaw?.trim() || keyRaw?.trim() || `Kategoria ${index + 1}`).toUpperCase();
+    const order =
+      readTopicNumber(row, TOPIC_CATEGORY_ORDER_FIELD_CANDIDATES) ?? index + 1;
+
+    const existing = categoriesByToken.get(normalizedToken);
+    if (!existing) {
+      categoriesByToken.set(normalizedToken, {
+        key,
+        label,
+        order,
+        items: new Set<string>(),
+      });
+    }
+
+    const categoryId = readTopicNumber(row, TOPIC_ID_FIELD_CANDIDATES);
+    if (categoryId !== null) {
+      categoryIdToToken.set(categoryId, normalizedToken);
+    }
+  });
+
+  filteredItemRows.forEach((row) => {
+    const text = readTopicText(row, TOPIC_ITEM_TEXT_FIELD_CANDIDATES);
+    if (!text) return;
+
+    let targetToken: string | null = null;
+    const categoryId = readTopicNumber(row, TOPIC_ITEM_CATEGORY_ID_FIELD_CANDIDATES);
+    if (categoryId !== null) {
+      targetToken = categoryIdToToken.get(categoryId) ?? null;
+    }
+
+    if (!targetToken) {
+      const categoryRef = readTopicText(row, TOPIC_ITEM_CATEGORY_FIELD_CANDIDATES);
+      if (categoryRef) {
+        const normalizedRef = normalizeTopicToken(categoryRef);
+        if (categoriesByToken.has(normalizedRef)) {
+          targetToken = normalizedRef;
+        } else {
+          categoriesByToken.set(normalizedRef, {
+            key: categoryRef.trim(),
+            label: categoryRef.trim().toUpperCase(),
+            order: 9999 + categoriesByToken.size,
+            items: new Set<string>(),
+          });
+          targetToken = normalizedRef;
+        }
+      }
+    }
+
+    if (!targetToken) return;
+    categoriesByToken.get(targetToken)?.items.add(text);
+  });
+
+  const categories = Array.from(categoriesByToken.values())
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'eu'))
+    .map((category) => ({
+      key: category.key,
+      label: category.label,
+      items: Array.from(category.items),
+    }));
+
+  return {
+    slug: topicSummary.slug,
+    title: topicSummary.title || fallbackTitle || normalizedSlug,
+    categories,
+  };
+};
+
+export const fetchAllTopics = async (): Promise<TopicSummary[]> => {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_topics');
+  const rpcTopics =
+    rpcError || !rpcData
+      ? []
+      : mapTopicSummaries(rpcData as Record<string, unknown>[]);
+
+  const { data: tableData, error: tableError } = await supabase
+    .from('topics')
+    .select('*')
+    .limit(5000);
+  const tableTopics =
+    tableError || !tableData
+      ? []
+      : mapTopicSummaries(tableData as Record<string, unknown>[]);
+
+  if (rpcTopics.length > 0) return rpcTopics;
+  if (tableTopics.length > 0) return tableTopics;
+  return [];
+};
+
+export const fetchTopicBySlug = async (
+  slug: string
+): Promise<TopicDetail | null> => {
+  const normalizedSlug = normalizeTopicSlug(slug);
+  if (!normalizedSlug) return null;
+
+  const slugCandidates = Array.from(
+    new Set(
+      [normalizedSlug, `${normalizedSlug}.ts`, `${normalizedSlug}.tsx`].map(
+        (entry) => entry.trim().toLowerCase()
+      )
+    )
+  );
+
+  let rpcTopic: TopicDetail | null = null;
+  for (const slugCandidate of slugCandidates) {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_topic', {
+      p_slug: slugCandidate,
+    });
+    if (rpcError || !rpcData) continue;
+    rpcTopic = normalizeTopicFromRpc(rpcData, normalizedSlug, null);
+    if (rpcTopic) break;
+  }
+
+  const tableTopic = await buildTopicDetailFromTables(
+    normalizedSlug,
+    rpcTopic?.title ?? null
+  );
+
+  if (tableTopic && tableTopic.categories.length > 0) return tableTopic;
+  if (rpcTopic && rpcTopic.categories.length > 0) return rpcTopic;
+  if (tableTopic) return tableTopic;
+  if (rpcTopic) return rpcTopic;
+  return null;
 };

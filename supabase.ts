@@ -9,7 +9,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Use an app-specific storage key to avoid stale tokens from old builds.
+    storageKey: 'hiztegia-auth-v2',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+  },
+});
 
 // Public read-only client. It never adopts end-user sessions, so queries
 // always run with the anon role policies.

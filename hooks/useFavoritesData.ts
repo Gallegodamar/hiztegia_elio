@@ -50,6 +50,8 @@ export const useFavoritesData = (username: string): UseFavoritesDataResult => {
         throw new Error(
           result.error.reason === 'missing_table'
             ? 'Gogokoen taula falta da Supabasen. Exekutatu supabase_favorites.sql.'
+            : result.error.reason === 'unauthorized'
+              ? 'Gogokoak erabiltzeko, Supabase Auth bidez saioa hasi behar duzu.'
             : 'Ezin izan dira gogokoak Supabasetik kargatu.'
         );
       }
@@ -105,6 +107,9 @@ export const useFavoritesData = (username: string): UseFavoritesDataResult => {
       if (result.error) {
         if (result.error.reason === 'duplicate') return `"${word}" gaur jada gordeta dago.`;
         if (result.error.reason === 'missing_table') return 'Gogokoen taula falta da Supabasen.';
+        if (result.error.reason === 'unauthorized') {
+          return 'Gogokoak gordetzeko, Supabase Auth bidez saioa hasi behar duzu.';
+        }
         return 'Ezin izan da gogokoa Supabasen gorde.';
       }
       if (!result.data) return 'Ezin izan da gogokoa Supabasen gorde.';
@@ -120,6 +125,9 @@ export const useFavoritesData = (username: string): UseFavoritesDataResult => {
       const result = await deleteMutation.mutateAsync({ username, favoriteId: favorite.id });
       if (result.error) {
         if (result.error.reason === 'missing_table') return 'Gogokoen taula falta da Supabasen.';
+        if (result.error.reason === 'unauthorized') {
+          return 'Gogokoak ezabatzeko, Supabase Auth bidez saioa hasi behar duzu.';
+        }
         return 'Ezin izan da gogokoa ezabatu.';
       }
       if (!result.data?.deleted) return 'Ez da ezabatzeko gogokoa aurkitu.';
