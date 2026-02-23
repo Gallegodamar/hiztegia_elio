@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
 import { useFavoritesData } from '../../hooks/useFavoritesData';
 import { normalizeFavoriteWordKey, todayKey, FavoriteWord, SearchMode } from '../../lib/userFavorites';
+import { FavoritesStudyDeck } from './FavoritesStudyDeck';
 
 const dangerActionClass = (isDisabled: boolean): string =>
   `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--danger'}`;
@@ -15,6 +16,7 @@ export const FavoritesPanel: React.FC = () => {
   const currentDay = todayKey();
   const [historyDate, setHistoryDate] = useState(() => currentDay);
   const [favoriteQuery, setFavoriteQuery] = useState('');
+  const [isStudyMode, setIsStudyMode] = useState(false);
 
   const allDays = useMemo(
     () =>
@@ -33,12 +35,26 @@ export const FavoritesPanel: React.FC = () => {
     return rows.filter((entry) => normalizeFavoriteWordKey(entry.word).includes(query));
   }, [favoriteQuery, favorites.favoritesByDate, historyDate]);
 
+  const studyRows = useMemo(() => {
+    const rows = Object.values(favorites.favoritesByDate)
+      .flat()
+      .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+    const query = normalizeFavoriteWordKey(favoriteQuery);
+    if (!query) return rows;
+    return rows.filter((entry) => normalizeFavoriteWordKey(entry.word).includes(query));
+  }, [favoriteQuery, favorites.favoritesByDate]);
+
   // Snap to nearest valid date if selected date disappears
   React.useEffect(() => {
     if (allDays.length === 0) return;
     const exists = allDays.some((day) => day.date === historyDate);
     if (!exists) setHistoryDate(allDays[0].date);
   }, [allDays, historyDate]);
+
+  React.useEffect(() => {
+    if (studyRows.length > 0) return;
+    if (isStudyMode) setIsStudyMode(false);
+  }, [isStudyMode, studyRows.length]);
 
   const onStudyWord = (word: string, mode: SearchMode) => {
     const query = `?q=${encodeURIComponent(word.trim())}`;
@@ -55,24 +71,41 @@ export const FavoritesPanel: React.FC = () => {
     <div className="favorites-view">
       <div className="favorites-view__controls">
         <section className="surface-card p-4 md:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="helper-note !m-0">{historyRows.length} hitz gordeta.</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={historyDate}
-                max={currentDay}
-                onChange={(e) => setHistoryDate(e.target.value)}
-                className="input-shell !w-auto !py-2 !text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setHistoryDate(currentDay)}
-                className="btn-secondary !py-2 !text-sm"
-              >
-                Gaur
-              </button>
-            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="helper-note !m-0">{historyRows.length} hitz gordeta.</p>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <input
+                  type="date"
+                  value={historyDate}
+                  max={currentDay}
+                  onChange={(e) => setHistoryDate(e.target.value)}
+                  className="input-shell !w-auto !py-2 !text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setHistoryDate(currentDay)}
+                  className="btn-secondary !py-2 !text-sm"
+                >
+                  Gaur
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStudyMode((prev) => !prev)}
+                  disabled={favorites.isLoading || Boolean(favorites.error) || studyRows.length === 0}
+                  className={
+                    isStudyMode
+                      ? 'action-pill action-pill--accent'
+                      : `action-pill ${
+                          favorites.isLoading || Boolean(favorites.error) || studyRows.length === 0
+                            ? 'action-pill--disabled'
+                            : 'action-pill--neutral'
+                        }`
+                  }
+                  title="Gogokoak txartelekin berrikusi"
+                >
+                  {isStudyMode ? 'Txartelak itxi' : 'Txartelekin ikasi'}
+                </button>
+              </div>
           </div>
         </section>
 
@@ -110,6 +143,12 @@ export const FavoritesPanel: React.FC = () => {
           <section className="surface-card surface-card--muted p-4 md:p-5">
             <p className="notice notice--error">{favorites.error}</p>
           </section>
+        ) : isStudyMode ? (
+          <FavoritesStudyDeck
+            entries={studyRows}
+            username={username}
+            onClose={() => setIsStudyMode(false)}
+          />
         ) : historyRows.length === 0 ? (
           <section className="surface-card surface-card--muted p-4 md:p-5">
             <p className="status-copy">Ez dago data honetarako hitz gordeturik.</p>

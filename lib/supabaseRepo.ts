@@ -2043,6 +2043,11 @@ const normalizeTopicFromRpc = (
   };
 };
 
+const countTopicItems = (topic: TopicDetail | null): number => {
+  if (!topic) return 0;
+  return topic.categories.reduce((total, category) => total + (category.items?.length ?? 0), 0);
+};
+
 const buildTopicDetailFromTables = async (
   normalizedSlug: string,
   fallbackTitle: string | null
@@ -2222,6 +2227,14 @@ export const fetchTopicBySlug = async (
     normalizedSlug,
     rpcTopic?.title ?? null
   );
+
+  const rpcItemCount = countTopicItems(rpcTopic);
+  const tableItemCount = countTopicItems(tableTopic);
+
+  // Prefer the richer payload. The table fallback uses broad capped reads and can
+  // return category shells without items when the topic rows fall outside the limit.
+  if (rpcItemCount > tableItemCount) return rpcTopic;
+  if (tableItemCount > rpcItemCount) return tableTopic;
 
   if (tableTopic && tableTopic.categories.length > 0) return tableTopic;
   if (rpcTopic && rpcTopic.categories.length > 0) return rpcTopic;
