@@ -154,12 +154,11 @@ const OrganizerCard: React.FC<{
         onClick={onToggleFavorite}
         disabled={isPending}
         aria-label={isFavorite ? 'Gogokoetatik kendu' : 'Gogokoa gehitu'}
+        className={`favorite-mark-button ${isFavorite ? 'favorite-mark-button--active' : ''}`}
         style={{
           position: 'absolute',
           top: '0.45rem',
           right: '0.5rem',
-          background: 'none',
-          border: 'none',
           padding: '0.3rem',
           cursor: isPending ? 'default' : 'pointer',
           color: isFavorite ? '#ee88a8' : 'var(--muted-1)',

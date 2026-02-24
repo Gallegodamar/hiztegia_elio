@@ -13,13 +13,13 @@ export const HeartIcon: React.FC<{ className?: string; filled?: boolean }> = ({ 
     className={className}
     aria-hidden="true"
     focusable="false"
-    style={{ width: '1.1rem', height: '1.1rem', display: 'block' }}
+    style={{ width: '1.25rem', height: '1.25rem', display: 'block' }}
   >
     <path
       d="M12 20.7s-7.2-4.5-8.5-8.6c-.8-2.6.5-5.4 3.1-6.2 2.1-.7 4.4.2 5.4 2.1 1-1.9 3.3-2.8 5.4-2.1 2.6.8 3.9 3.6 3.1 6.2-1.3 4.1-8.5 8.6-8.5 8.6Z"
       fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.8"
       strokeLinejoin="round"
     />
   </svg>

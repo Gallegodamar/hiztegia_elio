@@ -132,10 +132,9 @@ export const MeaningResults: React.FC<MeaningResultsProps> = ({
                   disabled={savedToday || saving}
                   aria-label={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
                   title={savedToday ? 'Gaur gordeta' : 'Gogokoetara'}
+                  className={`favorite-mark-button ${savedToday ? 'favorite-mark-button--active' : ''}`}
                   style={{
                     flexShrink: 0,
-                    background: 'none',
-                    border: 'none',
                     padding: '0.3rem',
                     cursor: savedToday || saving ? 'default' : 'pointer',
                     color: savedToday ? '#ee88a8' : 'var(--muted-1)',
