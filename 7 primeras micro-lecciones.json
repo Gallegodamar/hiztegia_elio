@@ -1,0 +1,204 @@
+﻿[
+  {
+    "level": "B1",
+    "title": "-ra vs -n (norantz vs kokapena)",
+    "estimated_minutes": 4,
+    "tags": ["kasua", "mugimendua", "kokapena"],
+    "short_explanation": "Euskaraz, -ra atzizkia norantz (helmuga / norabidea) adierazteko erabiltzen da; -n, berriz, kokapena (non) adierazteko.",
+    "examples": [
+      { "eu": "Donostiara noa.", "es": "Voy a Donostia (direcciÃ³n/objetivo)." },
+      { "eu": "Donostian bizi naiz.", "es": "Vivo en Donostia (ubicaciÃ³n)." },
+      { "eu": "Etxera joan naiz.", "es": "He ido a casa (destino)." },
+      { "eu": "Etxean nago.", "es": "Estoy en casa (lugar)." }
+    ],
+    "more_info": "Trikimailua: galdera egin. 'Nora?' â†’ -ra. 'Non?' â†’ -n.",
+    "questions": [
+      {
+        "prompt": "Bilbo__ noa.",
+        "options": ["Bilbora", "Bilbon", "Bilbotik"],
+        "correct_index": 0,
+        "explanation": "'Nora noa?' helmuga da â†’ Bilbora."
+      },
+      {
+        "prompt": "Gaur arratsaldean etxe__ geratuko naiz.",
+        "options": ["etxera", "etxean", "etxetik"],
+        "correct_index": 1,
+        "explanation": "'Non geratuko naiz?' kokapena da â†’ etxean."
+      },
+      {
+        "prompt": "IruÃ±e__ bizi da nire laguna.",
+        "options": ["IruÃ±era", "IruÃ±ean", "IruÃ±etik"],
+        "correct_index": 1,
+        "explanation": "Bizi = non? â†’ IruÃ±ean."
+      }
+    ]
+  },
+  {
+    "level": "B1",
+    "title": "-tik (jatorria) eta -ra (helmuga)",
+    "estimated_minutes": 4,
+    "tags": ["kasua", "jatorria", "helmuga"],
+    "short_explanation": "-tik atzizkiak jatorria edo abiapuntua adierazten du (nondik?); -ra atzizkiak helmuga (nora?).",
+    "examples": [
+      { "eu": "Gasteiztik nator.", "es": "Vengo de Gasteiz (origen)." },
+      { "eu": "Gasteizera noa.", "es": "Voy a Gasteiz (destino)." },
+      { "eu": "Etxetik irten naiz.", "es": "He salido de casa." },
+      { "eu": "Etxera itzuli naiz.", "es": "He vuelto a casa." }
+    ],
+    "more_info": "Askotan bikotean agertzen dira: 'X-tik Y-ra'.",
+    "questions": [
+      {
+        "prompt": "Unibertsitate__ etorri naiz autobusez.",
+        "options": ["unibertsitatera", "unibertsitatean", "unibertsitatetik"],
+        "correct_index": 2,
+        "explanation": "'Nondik etorri naiz?' â†’ unibertsitatetik."
+      },
+      {
+        "prompt": "Bihar goizean lan__ joango naiz.",
+        "options": ["lanera", "lanean", "lanetik"],
+        "correct_index": 0,
+        "explanation": "'Nora joango naiz?' â†’ lanera."
+      }
+    ]
+  },
+  {
+    "level": "B2",
+    "title": "-enean vs -tzean (denborazko perpausak)",
+    "estimated_minutes": 5,
+    "tags": ["menderakuntza", "denbora", "perpausak"],
+    "short_explanation": "-enean normalean gertakari zehatz bati lotzen zaio (noiz? une jakin batean). -tzean sarriago erabiltzen da ekintza/egoera orokorrago edo prozedurazko batean.",
+    "examples": [
+      { "eu": "Etxera iritsi nintzenean, deitu nuen.", "es": "Cuando lleguÃ© a casa (momento concreto), llamÃ©." },
+      { "eu": "Etxera iristean, beti oinetakoak kentzen ditut.", "es": "Al llegar a casa (hÃ¡bito), siempre me quito los zapatos." },
+      { "eu": "Azterketa bukatu nuenean, lasaitu nintzen.", "es": "Cuando terminÃ© el examen, me relajÃ©." }
+    ],
+    "more_info": "Biak posible dira kasu batzuetan, baina -tzean ohikoagoa da ohituretan/argibideetan.",
+    "questions": [
+      {
+        "prompt": "Etxera iritsi __, mezua bidali zidan.",
+        "options": ["nintzenean", "iristean", "nintzenean/iristean (biak)"],
+        "correct_index": 0,
+        "explanation": "Gertakari zehatza da â†’ 'iritsi nintzenean'."
+      },
+      {
+        "prompt": "Klasea hasi __, mugikorra isilarazi.",
+        "options": ["denean", "tzean", "denean/tzean (biak)"],
+        "correct_index": 1,
+        "explanation": "Argibide/prozedura moduan â†’ 'hastean' (-tzean)."
+      }
+    ]
+  },
+  {
+    "level": "B2",
+    "title": "-en arren (kontrastea: 'nahiz eta...')",
+    "estimated_minutes": 5,
+    "tags": ["menderakuntza", "kontrastea", "argumentazioa"],
+    "short_explanation": "-en arren = 'a pesar de que'. Aurreikuspena hautsi egiten da: lehen zatian espero dena ez da betetzen bigarrenean.",
+    "examples": [
+      { "eu": "Euria egin arren, irten gara.", "es": "Aunque llovÃ­a, hemos salido." },
+      { "eu": "Nekatuta egon arren, lanari ekin dio.", "es": "A pesar de estar cansado, se ha puesto a trabajar." }
+    ],
+    "more_info": "Askotan sinonimoa da: 'nahiz eta euria egin, irten gara'. Baina -en arren oso trinkoa da eta idatzian ohikoa.",
+    "questions": [
+      {
+        "prompt": "Hotza __, mendira joan dira.",
+        "options": ["egiten arren", "egiten denean", "egitean"],
+        "correct_index": 0,
+        "explanation": "Kontrastea ('a pesar de') â†’ 'egiten arren'."
+      },
+      {
+        "prompt": "Denbora gutxi __, proiektua amaitu dute.",
+        "options": ["izan arren", "izatean", "dagoenean"],
+        "correct_index": 0,
+        "explanation": "'Denbora gutxi izan arren' = aunque habÃ­a poco tiempo."
+      }
+    ]
+  },
+  {
+    "level": "B2",
+    "title": "omen / ote (ziurgabetasuna eta zurrumurrua)",
+    "estimated_minutes": 4,
+    "tags": ["modalitatea", "diskurtsoa", "matizak"],
+    "short_explanation": "omen erabiltzen da entzundako informazioa (zurrumurrua) adierazteko. ote galdera/ziurgabetasun kutsua emateko erabiltzen da.",
+    "examples": [
+      { "eu": "Bihar greba omen dago.", "es": "Dicen que maÃ±ana hay huelga." },
+      { "eu": "Etorri ote da?", "es": "Â¿HabrÃ¡ venido? / Â¿HabrÃ¡ llegado?" },
+      { "eu": "Hori egia omen da.", "es": "Se supone que eso es verdad." }
+    ],
+    "more_info": "omen = 'dicen que'. ote = duda, pregunta interna.",
+    "questions": [
+      {
+        "prompt": "Aste honetan euria __ du.",
+        "options": ["omen", "ote", "ere"],
+        "correct_index": 0,
+        "explanation": "Informazioa 'entzundakoa' â†’ omen."
+      },
+      {
+        "prompt": "Gaur berandu iritsiko __ naiz?",
+        "options": ["ote", "omen", "baino"],
+        "correct_index": 0,
+        "explanation": "Duda/pregunta â†’ ote."
+      }
+    ]
+  },
+  {
+    "level": "C1",
+    "title": "berriz vs ordea (kontraste diskurtsiboa)",
+    "estimated_minutes": 5,
+    "tags": ["lokailuak", "diskurtsoa", "idazketa"],
+    "short_explanation": "berriz maiz erabiltzen da bi elementu kontrajarri edo txandakatzean (A..., B, berriz...). ordea formaltasun handiagokoa da eta aurreko ideiari kontrapuntua jartzen dio.",
+    "examples": [
+      { "eu": "Nik bai; zu, berriz, ez.", "es": "Yo sÃ­; tÃº, en cambio, no." },
+      { "eu": "Saiatu da; ordea, ez du lortu.", "es": "Lo ha intentado; sin embargo, no lo ha logrado." },
+      { "eu": "Guk joango gara. Zuek, berriz, hemen geratuko zarete.", "es": "Nosotros iremos. Vosotros, en cambio, os quedarÃ©is aquÃ­." }
+    ],
+    "more_info": "berriz = alternancia/contraste entre dos sujetos/partes. ordea = 'sin embargo' mÃ¡s argumentativo y formal.",
+    "questions": [
+      {
+        "prompt": "Emaitzak onak dira; __, hobetu daiteke.",
+        "options": ["ordea", "berriz", "gainera"],
+        "correct_index": 0,
+        "explanation": "Egitura argumentatiboa ('sin embargo') â†’ ordea."
+      },
+      {
+        "prompt": "Ane etorriko da. Jon, __, etxean geratuko da.",
+        "options": ["berriz", "ordea", "hala ere"],
+        "correct_index": 0,
+        "explanation": "Bi pertsona kontrajarri (A..., B, berriz) â†’ berriz."
+      }
+    ]
+  },
+  {
+    "level": "C1",
+    "title": "Fokalizazioa: 'ba-' eta ordena markatua (azpimarra)",
+    "estimated_minutes": 5,
+    "tags": ["pragmatika", "azpimarra", "diskurtsoa"],
+    "short_explanation": "Euskaraz, informazioa azpimarratzeko (fokoa) ordena markatua edo partikulak erabil daitezke. 'Ba-' askotan baieztapen/azpimarra edo erantzun-kolpea emateko erabiltzen da testuinguru batzuetan.",
+    "examples": [
+      { "eu": "Nik BAi dakit.", "es": "Yo SÃ lo sÃ© (Ã©nfasis)." },
+      { "eu": "BA... hori ez nuen espero!", "es": "Puesâ€¦ Â¡eso no me lo esperaba!" },
+      { "eu": "LIBURUA irakurri dut, ez artikulua.", "es": "He leÃ­do EL LIBRO, no el artÃ­culo." }
+    ],
+    "more_info": "Helburua ez da arau itxi bat, baizik eta efektu komunikatiboa: zer azpimarratu nahi duzun. (Ahozkoan intonazioarekin doa askotan.)",
+    "questions": [
+      {
+        "prompt": "Aukeratu azpimarra adierazten duen esaldia (fokoa):",
+        "options": [
+          "Liburua irakurri dut, ez artikulua.",
+          "Liburua irakurri dut eta artikulua ere bai.",
+          "Liburua irakurri dut gaur."
+        ],
+        "correct_index": 0,
+        "explanation": "Kontraste bidezko fokalizazioa: 'liburua' azpimarratzen da."
+      },
+      {
+        "prompt": "Testuinguruan erantzun azpimarratua emateko egokiena:",
+        "options": ["Bai, badakit.", "Bai, ote dakit.", "Bai, omen dakit."],
+        "correct_index": 0,
+        "explanation": "Azpimarra/baieztapena â†’ 'badakit' (ba-)."
+      }
+    ]
+  }
+]
+
+
