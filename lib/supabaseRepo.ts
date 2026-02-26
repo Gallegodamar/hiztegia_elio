@@ -1,6 +1,7 @@
 import { DifficultyLevel } from '../types';
 import { DictionaryMeaning, OrganizerItem, SearchResultItem, TopicSummary, TopicDetail } from '../appTypes';
 import { supabase, supabasePublic } from '../supabase';
+import type { StudyWord } from './dailySession';
 import {
   FavoriteWord,
   FavoritesByDate,
@@ -1530,6 +1531,136 @@ export const fetchDailyMeaning = async (): Promise<DailyMeaning | null> => {
   if (!hitza || !esanahia) return null;
 
   return { hitza, esanahia };
+};
+
+const extractStudyWordTags = (row: Record<string, unknown>): string[] => {
+  const keys = Object.keys(row);
+  const tagCandidates = keys.filter((key) => {
+    const normalized = normalizeDictionaryKey(key);
+    return (
+      normalized.includes('tag') ||
+      normalized.includes('gaia') ||
+      normalized.includes('topic') ||
+      normalized.includes('kategori') ||
+      normalized.includes('category')
+    );
+  });
+
+  const values: string[] = [];
+  tagCandidates.forEach((key) => {
+    const value = row[key];
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (typeof item !== 'string') return;
+        const trimmed = item.trim();
+        if (trimmed) values.push(trimmed);
+      });
+      return;
+    }
+
+    if (typeof value === 'string') {
+      value
+        .split(/[;,|/]+/g)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .forEach((entry) => values.push(entry));
+    }
+  });
+
+  return Array.from(new Set(values));
+};
+
+export const fetchStudyWordPool = async (limit = 220): Promise<StudyWord[]> => {
+  if (isDictionaryTableUnavailable) return [];
+
+  await probeDictionaryTextColumns();
+
+  const orderCandidates = Array.from(
+    new Set(
+      [cachedDictionaryWordColumn, ...DICTIONARY_WORD_COLUMN_CANDIDATES].filter(
+        (value): value is string => Boolean(value)
+      )
+    )
+  );
+
+  let rows: Array<Record<string, unknown>> = [];
+
+  for (const orderColumn of orderCandidates) {
+    if (invalidDictionaryWordColumns.has(orderColumn)) continue;
+
+    const { data, error } = await supabasePublic
+      .from('diccionario')
+      .select('*')
+      .order(orderColumn, { ascending: true })
+      .limit(Math.max(limit * 2, 80));
+
+    if (error) {
+      const message = error.message.toLowerCase();
+      if (isDictionaryErrorForMissingTable(message)) {
+        isDictionaryTableUnavailable = true;
+        return [];
+      }
+      if (isDictionaryErrorForInvalidColumn(message)) {
+        invalidDictionaryWordColumns.add(orderColumn);
+        continue;
+      }
+      continue;
+    }
+
+    rows = (data ?? []) as Array<Record<string, unknown>>;
+    if (rows.length > 0) break;
+  }
+
+  if (rows.length === 0) {
+    const { data, error } = await supabasePublic
+      .from('diccionario')
+      .select('*')
+      .limit(Math.max(limit * 2, 80));
+
+    if (error) {
+      const message = error.message.toLowerCase();
+      if (isDictionaryErrorForMissingTable(message)) {
+        isDictionaryTableUnavailable = true;
+      }
+      return [];
+    }
+
+    rows = (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  const deduped = new Map<string, StudyWord>();
+
+  rows.forEach((row) => {
+    if (deduped.size >= limit) return;
+
+    const wordKey = findWordKey(row);
+    if (!wordKey) return;
+    if (!cachedDictionaryWordColumn) cachedDictionaryWordColumn = wordKey;
+
+    const meaningKey = findMeaningKey(row, wordKey);
+    if (!meaningKey) return;
+    if (!cachedDictionaryMeaningColumn) cachedDictionaryMeaningColumn = meaningKey;
+
+    const word = valueAsText(row[wordKey]);
+    const meaning = valueAsText(row[meaningKey]);
+    if (!word || !meaning) return;
+
+    const id =
+      findDictionaryEntryIdValue(row) ??
+      normalizeFavoriteWordKey(word) ??
+      `${word.toLowerCase()}-${deduped.size + 1}`;
+
+    if (deduped.has(id)) return;
+
+    deduped.set(id, {
+      id,
+      word,
+      meaning,
+      tags: extractStudyWordTags(row),
+    });
+  });
+
+  return Array.from(deduped.values()).slice(0, limit);
 };
 
 const FAVORITES_TABLE = 'user_favorite_words';
