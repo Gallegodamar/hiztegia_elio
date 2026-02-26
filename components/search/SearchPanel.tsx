@@ -4,70 +4,172 @@ import { useAppContext } from '../../contexts/AppContext';
 import { useSearch } from '../../hooks/useSearch';
 import { useFavoritesData } from '../../hooks/useFavoritesData';
 import { MeaningResults } from './MeaningResults';
+import { SynonymResults } from './SynonymResults';
+import { MeaningFlyout } from './MeaningFlyout';
 import { SearchIcon } from '../layout/Icons';
+import { SearchResultItem } from '../../appTypes';
 
 export const SearchPanel: React.FC = () => {
   const { username, showNotice } = useAppContext();
   const search = useSearch();
   const favorites = useFavoritesData(username);
   const [searchParams, setSearchParams] = useSearchParams();
+  const isSynonymsMode = searchParams.get('mode') === 'synonyms';
 
   useEffect(() => {
     const queryTerm = searchParams.get('q');
-    if (queryTerm && queryTerm.trim()) {
-      search.setSearchTerm(queryTerm.trim());
-      setSearchParams({}, { replace: true });
+    if (!queryTerm || !queryTerm.trim()) return;
+    search.setSearchTerm(queryTerm.trim());
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('q');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, search.setSearchTerm]);
+
+  useEffect(() => {
+    const nextMode = isSynonymsMode ? 'synonyms' : 'meaning';
+    if (search.searchMode !== nextMode) {
+      search.setSearchMode(nextMode);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isSynonymsMode, search.searchMode, search.setSearchMode]);
 
   const onSaveMeaningWord = async (word: string, meaning: string) => {
     const notice = await favorites.saveFavorite({ word, mode: 'meaning', meaning });
     if (notice) showNotice(notice);
   };
 
+  const onSaveSynonymRow = async (row: SearchResultItem) => {
+    const notice = await favorites.saveFavorite({
+      word: row.hitza,
+      mode: 'synonyms',
+      synonyms: row.sinonimoak,
+      level: row.level,
+    });
+    if (notice) showNotice(notice);
+  };
+
+  const handleToggleSearchMode = () => {
+    const nextMode = isSynonymsMode ? 'meaning' : 'synonyms';
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextMode === 'synonyms') nextParams.set('mode', 'synonyms');
+    else nextParams.delete('mode');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const handleSetSearchMode = (nextMode: 'meaning' | 'synonyms') => {
+    if ((nextMode === 'synonyms') === isSynonymsMode) return;
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextMode === 'synonyms') nextParams.set('mode', 'synonyms');
+    else nextParams.delete('mode');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const handleSearchAction = () => {
+    const term = search.searchTerm.trim();
+    if (!term) return;
+    if (isSynonymsMode) {
+      search.studyWord(term, 'synonyms');
+      return;
+    }
+    search.searchMeaningWord(term);
+  };
+
   return (
     <div className="dictionary-view">
       <div className="dictionary-view__controls">
-        <section className="surface-card search-controls p-4 md:p-5">
-          <div className="search-input-shell search-input-shell--leading">
+        <section className="surface-card search-controls search-controls--home p-3 md:p-4">
+          <div className="home-search-tabs" role="tablist" aria-label="Bilaketa mota">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!isSynonymsMode}
+              className={`home-search-tabs__tab ${!isSynonymsMode ? 'home-search-tabs__tab--active' : ''}`}
+              onClick={() => handleSetSearchMode('meaning')}
+            >
+              Definizioak
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isSynonymsMode}
+              className={`home-search-tabs__tab ${isSynonymsMode ? 'home-search-tabs__tab--active' : ''}`}
+              onClick={() => handleSetSearchMode('synonyms')}
+            >
+              Sinonimoak
+            </button>
+          </div>
+
+          <div className="search-input-shell search-input-shell--leading search-input-shell--home">
             <SearchIcon className="search-input-icon" />
             <input
               type="text"
               value={search.searchTerm}
               onChange={(e) => search.setSearchTerm(e.target.value)}
-              placeholder="Idatzi hitz bat esanahia ikusteko (adib. *bar*)..."
-              className="input-shell input-shell--large input-shell--with-clear input-shell--with-icon"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearchAction();
+              }}
+              placeholder={
+                isSynonymsMode
+                  ? 'Idatzi hitz bat edo sinonimo bat (adib. *bar*)...'
+                  : 'Idatzi hitz bat esanahia ikusteko (adib. *bar*)...'
+              }
+              className="input-shell input-shell--large input-shell--with-icon input-shell--with-cta home-search-input"
             />
-            {search.searchTerm.trim().length > 0 ? (
-              <button
-                type="button"
-                onClick={() => search.setSearchTerm('')}
-                className="search-input-clear"
-                aria-label="Bilaketa garbitu"
-                title="Garbitu"
-              >
-                x
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={search.searchTerm.trim().length > 0 ? handleSearchAction : handleToggleSearchMode}
+              className="home-search-input__cta"
+              aria-label={
+                search.searchTerm.trim().length > 0
+                  ? 'Bilatu'
+                  : isSynonymsMode
+                    ? 'Esanahien modura aldatu'
+                    : 'Sinonimoen modura aldatu'
+              }
+              title={search.searchTerm.trim().length > 0 ? 'Bilatu' : 'Aldatu modua'}
+            >
+              <SearchIcon className="home-search-input__cta-icon" />
+            </button>
           </div>
         </section>
       </div>
 
       <div className="dictionary-view__results custom-scrollbar">
-        <MeaningResults
-          searchTerm={search.searchTerm}
-          isMeaningLoading={search.isMeaningLoading}
-          meaningRows={search.meaningRows}
-          fallbackUrl={search.meaningFallbackUrl}
-          meaningPage={search.meaningPage}
-          onMeaningPageChange={search.setMeaningPage}
-          isSavedToday={favorites.isSavedToday}
-          isSavingWord={favorites.isSavingWord}
-          onSave={onSaveMeaningWord}
-          onSearchWord={search.searchMeaningWord}
-        />
+        {isSynonymsMode ? (
+          <SynonymResults
+            searchTerm={search.searchTerm}
+            isSearching={search.isSynonymSearching}
+            rows={search.synonymResults}
+            synonymPage={search.synonymPage}
+            onSynonymPageChange={search.setSynonymPage}
+            isSavedToday={favorites.isSavedToday}
+            isSavingWord={favorites.isSavingWord}
+            onSave={onSaveSynonymRow}
+            onOpenMeaning={search.openMeaningFlyout}
+            onSearchWord={(word) => search.studyWord(word, 'synonyms')}
+          />
+        ) : (
+          <MeaningResults
+            searchTerm={search.searchTerm}
+            isMeaningLoading={search.isMeaningLoading}
+            meaningRows={search.meaningRows}
+            fallbackUrl={search.meaningFallbackUrl}
+            meaningPage={search.meaningPage}
+            onMeaningPageChange={search.setMeaningPage}
+            isSavedToday={favorites.isSavedToday}
+            isSavingWord={favorites.isSavingWord}
+            onSave={onSaveMeaningWord}
+            onSearchWord={search.searchMeaningWord}
+          />
+        )}
       </div>
+
+      {search.flyout ? (
+        <MeaningFlyout
+          flyout={search.flyout}
+          flyoutRef={search.flyoutRef}
+          onClose={search.closeFlyout}
+        />
+      ) : null}
     </div>
   );
 };

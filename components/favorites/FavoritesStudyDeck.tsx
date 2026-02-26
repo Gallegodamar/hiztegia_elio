@@ -315,7 +315,6 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
   }, []);
 
   const now = Date.now();
-  const dueCount = useMemo(() => getDueCount(uniqueEntries, memory, now), [memory, now, uniqueEntries]);
   const nextDueAt = useMemo(() => getNextDueAt(uniqueEntries, memory, now), [memory, now, uniqueEntries]);
 
   const activeEntry = batchEntries[batchIndex] ?? null;
@@ -323,20 +322,6 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
   const batchCompleted = batchEntries.length > 0 && batchIndex >= batchEntries.length;
   const batchProgress = batchEntries.length > 0 ? Math.round((batchIndex / batchEntries.length) * 100) : 0;
 
-  const reviewCounts = useMemo(
-    () =>
-      uniqueEntries.reduce(
-        (acc, entry) => {
-          const row = getEntryMemory(memory, entry);
-          if (!row) return acc;
-          acc.known += row.knownCount;
-          acc.again += row.againCount;
-          return acc;
-        },
-        { known: 0, again: 0 }
-      ),
-    [memory, uniqueEntries]
-  );
 
   const answerText = activeEntry ? buildPrimaryAnswer(activeEntry) : null;
 
@@ -451,28 +436,13 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
   return (
     <div className="favorites-study-overlay" role="dialog" aria-modal="true" aria-label="Gogokoen ikasketa modua">
       <section className="favorites-study">
-        <div className="favorites-study__top">
-          <div>
-            <p className="section-label favorites-study__kicker">Ikasketa modua</p>
-            <h3 className="favorites-study__title">Gogoko guztiak · 10eko ausazko sortak</h3>
-            <p className="helper-note !m-0">
-              {uniqueEntries.length} hitz guztira · {dueCount} berrikusteko orain
-            </p>
-          </div>
+        <div className="favorites-study__top" style={{ justifyContent: 'flex-end' }}>
           <button type="button" onClick={onClose} className="action-pill action-pill--neutral">
             Zerrendara itzuli
           </button>
         </div>
 
         <div className="favorites-study__meta">
-          <div className="favorites-study__meta-row">
-            <p className="helper-note !m-0">
-              Sorta {batchNumber} · Saio honetan: {sessionStats.known} badakit / {sessionStats.again} berrikusi
-            </p>
-            <p className="helper-note !m-0">
-              Historiala: {reviewCounts.known} badakit / {reviewCounts.again} berrikusi
-            </p>
-          </div>
           <div className="favorites-study__progress" aria-hidden="true">
             <div className="favorites-study__progress-bar" style={{ width: `${batchProgress}%` }} />
           </div>
@@ -665,9 +635,6 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
               </div>
             </div>
 
-            <p className="favorites-study__remaining">
-              Sorta honetan falta dira: {Math.max(batchEntries.length - (batchIndex + 1), 0)}
-            </p>
           </>
         ) : null}
       </section>

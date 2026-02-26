@@ -1,74 +1,83 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { OpenBookIcon, HeartIcon, PlusIcon, GroupIcon, SearchIcon } from './Icons';
+import { HeartIcon, HomeIcon, SearchIcon, StarIcon } from './Icons';
 
-type NavView = 'dictionary' | 'synonyms' | 'favorites' | 'organizers' | 'addSynonym';
+type NavView = 'home' | 'search' | 'grammar' | 'progress';
 
 const viewRoutes: Record<NavView, string> = {
-  dictionary: '/',
-  synonyms: '/sinonimoak',
-  favorites: '/favoritos',
-  organizers: '/antolatzaileak',
-  addSynonym: '/admin',
+  home: '/',
+  search: '/bilatu',
+  grammar: '/gaurko-gramatika',
+  progress: '/favoritos',
 };
 
 const viewLabels: Record<NavView, string> = {
-  dictionary: 'Esanahia',
-  synonyms: 'Sinonimoak',
-  favorites: 'Gogokoak',
-  organizers: 'Antolatzaileak',
-  addSynonym: 'Sinonimoa gehitu',
+  home: 'Hasiera',
+  search: 'Bilatu',
+  grammar: 'Gramatika',
+  progress: 'Gogokoak',
 };
 
 export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) => {
+  void isAdminUser;
   const navigate = useNavigate();
   const location = useLocation();
 
-  const views: NavView[] = isAdminUser
-    ? ['dictionary', 'synonyms', 'favorites', 'organizers', 'addSynonym']
-    : ['dictionary', 'synonyms', 'favorites', 'organizers'];
+  const views: NavView[] = ['home', 'search', 'grammar', 'progress'];
 
-  const activeView: NavView =
-    location.pathname === '/sinonimoak'
-      ? 'synonyms'
+  const activeView: NavView | null =
+    location.pathname === '/'
+      ? 'home'
+      : location.pathname === '/bilatu'
+        ? 'search'
+      : location.pathname === '/gaurko-gramatika'
+        ? 'grammar'
       : location.pathname === '/favoritos'
-        ? 'favorites'
-        : location.pathname === '/antolatzaileak'
-          ? 'organizers'
-          : location.pathname === '/admin'
-            ? 'addSynonym'
-            : 'dictionary';
+        ? 'progress'
+        : null;
 
   return (
     <nav className="bottom-taskbar" aria-label="Nabigazio nagusia">
       <div className="bottom-taskbar__buttons">
-        {views.map((view, index) => {
+        {views.map((view) => {
           const isActive = activeView === view;
           return (
-            <React.Fragment key={view}>
-              {index > 0 ? <span className="bottom-taskbar__separator" aria-hidden="true" /> : null}
-              <button
-                type="button"
-                onClick={() => navigate(viewRoutes[view])}
-                className={`bottom-taskbar__button ${
-                  isActive ? 'bottom-taskbar__button--active' : 'bottom-taskbar__button--idle'
-                }`}
-                aria-label={viewLabels[view]}
-                title={viewLabels[view]}
-              >
-                {view === 'dictionary' ? (
-                  <SearchIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
-                ) : view === 'synonyms' ? (
-                  <OpenBookIcon className="bottom-taskbar__icon bottom-taskbar__icon--dictionary" />
-                ) : view === 'favorites' ? (
-                  <HeartIcon className="bottom-taskbar__icon bottom-taskbar__icon--favorites" />
-                ) : view === 'organizers' ? (
-                  <GroupIcon className="bottom-taskbar__icon bottom-taskbar__icon--organizers" />
+            <button
+              key={view}
+              type="button"
+              onClick={() => navigate(viewRoutes[view])}
+              className={`bottom-taskbar__button ${
+                isActive ? 'bottom-taskbar__button--active' : 'bottom-taskbar__button--idle'
+              }`}
+              aria-label={viewLabels[view]}
+              title={viewLabels[view]}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="bottom-taskbar__button-content">
+                {view === 'home' ? (
+                  <HomeIcon
+                    filled={isActive}
+                    className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--home"
+                  />
+                ) : view === 'search' ? (
+                  <SearchIcon
+                    filled={isActive}
+                    className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--search"
+                  />
+                ) : view === 'grammar' ? (
+                  <StarIcon
+                    filled={isActive}
+                    className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--grammar"
+                  />
                 ) : (
-                  <PlusIcon className="bottom-taskbar__icon bottom-taskbar__icon--add" />
+                  <HeartIcon
+                    filled={isActive}
+                    className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--favorites"
+                  />
                 )}
-              </button>
-            </React.Fragment>
+                <span className="bottom-taskbar__label">{viewLabels[view]}</span>
+              </span>
+            </button>
           );
         })}
       </div>

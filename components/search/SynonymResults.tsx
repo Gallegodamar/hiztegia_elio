@@ -1,7 +1,6 @@
 import React from 'react';
 import { SearchResultItem } from '../../appTypes';
 import { isTermReady } from '../../hooks/useSearch';
-import { DailyWordCard } from './DailyWordCard';
 import { HeartIcon } from '../layout/Icons';
 
 const RESULTS_PAGE_SIZE = 10;
@@ -15,7 +14,6 @@ type SynonymResultsProps = {
   isSavedToday: (word: string) => boolean;
   isSavingWord: (word: string) => boolean;
   onSave: (row: SearchResultItem) => void;
-  onSaveDailySynonym: (word: string, synonyms: string[]) => Promise<void> | void;
   onOpenMeaning: (term: string, anchorEl: HTMLElement) => void;
   onSearchWord: (word: string) => void;
 };
@@ -29,18 +27,14 @@ export const SynonymResults: React.FC<SynonymResultsProps> = ({
   isSavedToday,
   isSavingWord,
   onSave,
-  onSaveDailySynonym,
   onOpenMeaning,
   onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
     return (
-      <DailyWordCard
-        mode="synonyms"
-        isSavedToday={isSavedToday}
-        isSavingWord={isSavingWord}
-        onSaveSynonym={onSaveDailySynonym}
-      />
+      <article className="surface-card surface-card--muted p-4 md:p-5">
+        <p className="status-copy">Idatzi hitz bat edo sinonimo bat bilatzeko.</p>
+      </article>
     );
   }
   if (isSearching) {

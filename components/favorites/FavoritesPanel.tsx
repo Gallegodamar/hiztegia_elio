@@ -26,6 +26,13 @@ export const FavoritesPanel: React.FC = () => {
     [favorites.favoritesByDate]
   );
 
+  const totalSavedCount = useMemo(
+    () => Object.values(favorites.favoritesByDate).reduce((sum, rows) => sum + rows.length, 0),
+    [favorites.favoritesByDate]
+  );
+
+  const selectedDateTotal = favorites.favoritesByDate[historyDate]?.length ?? 0;
+
   const historyRows = useMemo(() => {
     const rows = [...(favorites.favoritesByDate[historyDate] ?? [])].sort((a, b) =>
       b.savedAt.localeCompare(a.savedAt)
@@ -72,7 +79,11 @@ export const FavoritesPanel: React.FC = () => {
       <div className="favorites-view__controls">
         <section className="surface-card p-4 md:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="helper-note !m-0">{historyRows.length} hitz gordeta.</p>
+              <p className="helper-note !m-0">
+                {favoriteQuery.trim().length > 0
+                  ? `${historyRows.length} emaitza | ${selectedDateTotal} data honetan | ${totalSavedCount} guztira`
+                  : `${selectedDateTotal} hitz data honetan | ${totalSavedCount} guztira`}
+              </p>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <input
                   type="date"

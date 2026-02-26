@@ -7,6 +7,7 @@ type AppShellProps = {
   contentClassName?: string;
   footerClassName?: string;
   topRightControl?: React.ReactNode;
+  hideFooterPlaceholder?: boolean;
 };
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -16,6 +17,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   contentClassName = '',
   footerClassName = '',
   topRightControl,
+  hideFooterPlaceholder = false,
 }) => {
   const resolvedFooterClassName = `app-shell__footer ${footerClassName}`.trim();
 
@@ -39,7 +41,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         </main>
         {footer ? (
           <footer className={resolvedFooterClassName}>{footer}</footer>
-        ) : (
+        ) : hideFooterPlaceholder ? null : (
           <footer className="app-shell__footer app-shell__footer--ghost" aria-hidden="true" />
         )}
       </div>

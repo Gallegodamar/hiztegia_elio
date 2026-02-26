@@ -1,7 +1,6 @@
 import React from 'react';
 import { DictionaryMeaning } from '../../appTypes';
 import { isTermReady } from '../../hooks/useSearch';
-import { TopicChips } from './TopicChips';
 import { HeartIcon } from '../layout/Icons';
 
 const RESULTS_PAGE_SIZE = 10;
@@ -32,7 +31,11 @@ export const MeaningResults: React.FC<MeaningResultsProps> = ({
   onSearchWord,
 }) => {
   if (!isTermReady(searchTerm)) {
-    return <TopicChips />;
+    return (
+      <article className="surface-card surface-card--muted p-4 md:p-5">
+        <p className="status-copy">Idatzi hitz bat bilatzeko.</p>
+      </article>
+    );
   }
   if (isMeaningLoading) {
     return <p className="status-copy">Esanahiak bilatzen...</p>;
