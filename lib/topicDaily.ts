@@ -1,29 +1,30 @@
 import { TopicSummary } from '../appTypes';
+import type { AppIconName } from '../components/ui/Icon';
 
 type TopicVisual = {
-  icon: string;
+  icon: AppIconName;
   hue: string;
   soft: string;
   tint: string;
 };
 
-const TOPIC_ICONS = [
-  '📘',
-  '🍎',
-  '🏠',
-  '👥',
-  '💬',
-  '🌍',
-  '🧠',
-  '💼',
-  '🩺',
-  '⚖️',
-  '📱',
-  '🚀',
-  '🎓',
-  '🛡️',
-  '🌱',
-  '🎯',
+const TOPIC_ICONS: AppIconName[] = [
+  'book',
+  'bookmark',
+  'home',
+  'users',
+  'message',
+  'globe',
+  'brain',
+  'briefcase',
+  'stethoscope',
+  'scale',
+  'smartphone',
+  'rocket',
+  'grammar',
+  'shield',
+  'sprout',
+  'target',
 ];
 
 const TOPIC_COLORS: Array<{ hue: string; soft: string; tint: string }> = [
@@ -64,7 +65,7 @@ export const getDailyTopic = (
 export const getTopicVisual = (slug: string): TopicVisual => {
   const token = slug.trim().toLowerCase() || 'topic';
   const hash = hashText(token);
-  const icon = TOPIC_ICONS[hash % TOPIC_ICONS.length] ?? '📘';
+  const icon = TOPIC_ICONS[hash % TOPIC_ICONS.length] ?? 'book';
   const color = TOPIC_COLORS[hash % TOPIC_COLORS.length] ?? TOPIC_COLORS[0];
   return {
     icon,
@@ -73,4 +74,3 @@ export const getTopicVisual = (slug: string): TopicVisual => {
     tint: color.tint,
   };
 };
-

@@ -1,12 +1,12 @@
 import React from 'react';
-import { OpenBookIcon, GroupIcon, SearchIcon } from '../layout/Icons';
+import { Icon, type AppIconName } from '../ui/Icon';
 
 type ShortcutItem = { label: string; path: string; icon: 'synonyms' | 'meaning' | 'organizers' };
 
-const ICON_MAP: Record<ShortcutItem['icon'], { component: React.FC<{ className?: string }>; className: string }> = {
-  synonyms: { component: OpenBookIcon, className: 'bottom-taskbar__icon bottom-taskbar__icon--dictionary' },
-  meaning: { component: SearchIcon, className: 'bottom-taskbar__icon bottom-taskbar__icon--dictionary' },
-  organizers: { component: GroupIcon, className: 'bottom-taskbar__icon bottom-taskbar__icon--organizers' },
+const ICON_MAP: Record<ShortcutItem['icon'], { name: AppIconName; className: string }> = {
+  synonyms: { name: 'book', className: 'bottom-taskbar__icon bottom-taskbar__icon--dictionary' },
+  meaning: { name: 'search', className: 'bottom-taskbar__icon bottom-taskbar__icon--dictionary' },
+  organizers: { name: 'users', className: 'bottom-taskbar__icon bottom-taskbar__icon--organizers' },
 };
 
 type IdleShortcutsProps = {
@@ -16,7 +16,7 @@ type IdleShortcutsProps = {
 };
 
 const ShortcutButton: React.FC<{ item: ShortcutItem; onNavigate: (path: string) => void }> = ({ item, onNavigate }) => {
-  const { component: Icon, className: iconClass } = ICON_MAP[item.icon];
+  const { name, className: iconClass } = ICON_MAP[item.icon];
   return (
     <button
       type="button"
@@ -42,7 +42,7 @@ const ShortcutButton: React.FC<{ item: ShortcutItem; onNavigate: (path: string) 
         e.currentTarget.style.borderColor = 'var(--border-soft)';
       }}
     >
-      <Icon className={iconClass} />
+      <Icon name={name} className={iconClass} />
       <span
         className="font-display"
         style={{

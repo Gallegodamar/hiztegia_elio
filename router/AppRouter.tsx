@@ -75,7 +75,7 @@ const SimplePlaceholderPanel: React.FC<{
 );
 
 const contentClassByPath: Record<string, string> = {
-  '/': 'space-y-4',
+  '/': 'app-shell__content--home space-y-2',
   '/bilatu': 'app-shell__content--dictionary',
   '/daily': 'app-shell__content--study-session',
   '/daily/summary': 'app-shell__content--study-session',
@@ -90,7 +90,7 @@ const contentClassByPath: Record<string, string> = {
   '/gaurko-gaia': 'app-shell__content--dictionary',
   '/gaurko-sinonimoak': 'app-shell__content--dictionary',
   '/gaurko-antolatzailea': 'app-shell__content--dictionary',
-  '/gaurko-gramatika': 'app-shell__content--study-session',
+  '/gaurko-gramatika': 'app-shell__content--grammar',
   '/ikasi/gaurko': 'app-shell__content--study-session',
 };
 
@@ -138,10 +138,11 @@ const LogoutConfirmDialog: React.FC<{ username: string; onConfirm: () => void; o
 const AuthenticatedLayout: React.FC = () => {
   const { username, logout, notice } = useAppContext();
   const location = useLocation();
-  const isStudySessionRoute =
-    location.pathname.startsWith('/daily') ||
-    location.pathname === '/ikasi/gaurko' ||
-    location.pathname === '/gaurko-gramatika';
+  const isDailyStudySessionRoute =
+    location.pathname.startsWith('/daily') || location.pathname === '/ikasi/gaurko';
+  const isGrammarRoute = location.pathname.startsWith('/gaurko-gramatika');
+  const hideHeaderRoute = isDailyStudySessionRoute || isGrammarRoute;
+  const hideFooterRoute = isDailyStudySessionRoute;
   const isAdminUser = username === 'admin';
   const userInitials = useMemo(() => buildUserInitials(username), [username]);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -178,9 +179,11 @@ const AuthenticatedLayout: React.FC = () => {
                     ? 'Gaiak'
                     : '';
 
-  const contentClassName = isStudySessionRoute
+  const contentClassName = isDailyStudySessionRoute
     ? 'app-shell__content--study-session'
-    : `mx-auto w-full max-w-5xl ${contentClass}`;
+    : isGrammarRoute
+      ? 'app-shell__content--grammar'
+      : `mx-auto w-full max-w-5xl ${contentClass}`;
 
   return (
     <>
@@ -192,12 +195,12 @@ const AuthenticatedLayout: React.FC = () => {
       />
     )}
     <AppShell
-      header={isStudySessionRoute ? undefined : (
+      header={hideHeaderRoute ? undefined : (
         <ScreenHeader
           title={headerTitle}
         />
       )}
-      topRightControl={isStudySessionRoute ? undefined : (
+      topRightControl={hideHeaderRoute ? undefined : (
         <button
           onClick={() => setShowLogoutConfirm(true)}
           className="user-avatar-button"
@@ -208,12 +211,12 @@ const AuthenticatedLayout: React.FC = () => {
           {userInitials}
         </button>
       )}
-      footer={isStudySessionRoute ? undefined : <BottomNav isAdminUser={isAdminUser} />}
-      footerClassName={isStudySessionRoute ? '' : 'app-shell__footer--menu app-shell__footer--taskbar'}
+      footer={hideFooterRoute ? undefined : <BottomNav isAdminUser={isAdminUser} />}
+      footerClassName={hideFooterRoute ? '' : 'app-shell__footer--menu app-shell__footer--taskbar'}
       contentClassName={contentClassName}
-      hideFooterPlaceholder={isStudySessionRoute}
+      hideFooterPlaceholder={hideFooterRoute}
     >
-      {!isStudySessionRoute && notice ? <p className="notice notice--info">{notice}</p> : null}
+      {!hideHeaderRoute && notice ? <p className="notice notice--info">{notice}</p> : null}
 
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
@@ -230,7 +233,7 @@ const AuthenticatedLayout: React.FC = () => {
             element={
               <SimplePlaceholderPanel
                 title="Estatistikak"
-                description="Hemen ikasketa estatistika sakonak erakutsiko dira (racha, akatsak, aurrerapena)."
+                description="Hemen ikasketa estatistika sakonak erakutsiko dira (segida, akatsak, aurrerapena)."
               />
             }
           />

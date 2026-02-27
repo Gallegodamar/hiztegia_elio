@@ -5,7 +5,7 @@ import { useSearch } from '../../hooks/useSearch';
 import { useFavoritesData } from '../../hooks/useFavoritesData';
 import { SynonymResults } from './SynonymResults';
 import { MeaningFlyout } from './MeaningFlyout';
-import { SearchIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 import { SearchResultItem } from '../../appTypes';
 
 export const SynonymPanel: React.FC = () => {
@@ -46,7 +46,7 @@ export const SynonymPanel: React.FC = () => {
       <div className="dictionary-view__controls">
         <section className="surface-card search-controls p-4 md:p-5">
           <div className="search-input-shell search-input-shell--leading">
-            <SearchIcon className="search-input-icon" />
+            <Icon name="search" className="search-input-icon" />
             <input
               type="text"
               value={search.searchTerm}
@@ -62,7 +62,7 @@ export const SynonymPanel: React.FC = () => {
                 aria-label="Bilaketa garbitu"
                 title="Garbitu"
               >
-                x
+                <Icon name="x" size={16} />
               </button>
             ) : null}
           </div>

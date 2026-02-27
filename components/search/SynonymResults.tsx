@@ -1,7 +1,7 @@
 import React from 'react';
 import { SearchResultItem } from '../../appTypes';
 import { isTermReady } from '../../hooks/useSearch';
-import { HeartIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 
 const RESULTS_PAGE_SIZE = 10;
 
@@ -109,13 +109,14 @@ export const SynonymResults: React.FC<SynonymResultsProps> = ({
                   style={{
                     flexShrink: 0,
                     padding: '0.3rem',
-                    cursor: savedToday || saving ? 'default' : 'pointer',
-                    color: savedToday ? '#ee88a8' : 'var(--muted-1)',
                     opacity: saving ? 0.5 : 1,
-                    transition: 'color 0.18s ease, transform 0.18s ease',
                   }}
                 >
-                  <HeartIcon filled={savedToday} className={`bottom-taskbar__icon ${savedToday ? 'bottom-taskbar__icon--favorites' : ''}`} />
+                  <Icon
+                    name="star"
+                    filled={savedToday}
+                    className={`bottom-taskbar__icon ${savedToday ? 'bottom-taskbar__icon--favorites' : ''}`}
+                  />
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

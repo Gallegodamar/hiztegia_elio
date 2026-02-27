@@ -6,7 +6,7 @@ import { useFavoritesData } from '../../hooks/useFavoritesData';
 import { MeaningResults } from './MeaningResults';
 import { SynonymResults } from './SynonymResults';
 import { MeaningFlyout } from './MeaningFlyout';
-import { SearchIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 import { SearchResultItem } from '../../appTypes';
 
 export const SearchPanel: React.FC = () => {
@@ -47,20 +47,19 @@ export const SearchPanel: React.FC = () => {
     if (notice) showNotice(notice);
   };
 
-  const handleToggleSearchMode = () => {
-    const nextMode = isSynonymsMode ? 'meaning' : 'synonyms';
-    const nextParams = new URLSearchParams(searchParams);
-    if (nextMode === 'synonyms') nextParams.set('mode', 'synonyms');
-    else nextParams.delete('mode');
-    setSearchParams(nextParams, { replace: true });
-  };
-
   const handleSetSearchMode = (nextMode: 'meaning' | 'synonyms') => {
     if ((nextMode === 'synonyms') === isSynonymsMode) return;
     const nextParams = new URLSearchParams(searchParams);
     if (nextMode === 'synonyms') nextParams.set('mode', 'synonyms');
     else nextParams.delete('mode');
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const hasSearchTerm = search.searchTerm.trim().length > 0;
+
+  const handleClearSearch = () => {
+    if (!hasSearchTerm) return;
+    search.setSearchTerm('');
   };
 
   const handleSearchAction = () => {
@@ -99,7 +98,7 @@ export const SearchPanel: React.FC = () => {
           </div>
 
           <div className="search-input-shell search-input-shell--leading search-input-shell--home">
-            <SearchIcon className="search-input-icon" />
+            <Icon name="search" className="search-input-icon" />
             <input
               type="text"
               value={search.searchTerm}
@@ -116,18 +115,13 @@ export const SearchPanel: React.FC = () => {
             />
             <button
               type="button"
-              onClick={search.searchTerm.trim().length > 0 ? handleSearchAction : handleToggleSearchMode}
+              onClick={handleClearSearch}
               className="home-search-input__cta"
-              aria-label={
-                search.searchTerm.trim().length > 0
-                  ? 'Bilatu'
-                  : isSynonymsMode
-                    ? 'Esanahien modura aldatu'
-                    : 'Sinonimoen modura aldatu'
-              }
-              title={search.searchTerm.trim().length > 0 ? 'Bilatu' : 'Aldatu modua'}
+              aria-label="Bilaketa garbitu"
+              title="Garbitu"
+              disabled={!hasSearchTerm}
             >
-              <SearchIcon className="home-search-input__cta-icon" />
+              <Icon name="x" className="home-search-input__cta-icon" />
             </button>
           </div>
         </section>

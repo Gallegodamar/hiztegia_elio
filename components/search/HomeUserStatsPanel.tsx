@@ -86,13 +86,13 @@ export const HomeUserStatsPanel: React.FC<HomeUserStatsPanelProps> = ({
   }, [favorites.favoritesByDate, username]);
 
   const streakDisplay =
-    streak.current > 0 && streak.lastCompletedDate ? String(streak.current) : '—';
+    streak.current > 0 && streak.lastCompletedDate ? String(streak.current) : '-';
 
   const cards = compactHome
     ? [
-        { label: 'Racha', value: streakDisplay, tone: 'accent' as const },
+        { label: 'Segida', value: streakDisplay, tone: 'accent' as const },
         { label: 'Hitz ikasiak', value: stats.studiedSavedWords, tone: 'soft' as const },
-        { label: 'Maila', value: '—' },
+        { label: 'Maila', value: '-' },
       ]
     : [
         { label: 'Guztira gordeta', value: stats.totalSavedWords, tone: 'accent' as const },
@@ -152,4 +152,5 @@ export const HomeUserStatsPanel: React.FC<HomeUserStatsPanelProps> = ({
     </section>
   );
 };
+
 

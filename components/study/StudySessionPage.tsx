@@ -17,15 +17,9 @@ import {
   type StreakState,
   type StudyHistory,
 } from '../../lib/dailySession';
+import { Icon } from '../ui/Icon';
 
 type FeedbackTone = 'correct' | 'wrong';
-
-const CloseIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="study-session__close-icon">
-    <path d="M6 6l12 12" />
-    <path d="M18 6l-12 12" />
-  </svg>
-);
 
 const AnswerOption: React.FC<{
   label: string;
@@ -220,7 +214,7 @@ export const StudySessionPage: React.FC = () => {
               aria-label="Itxi eta hasierara itzuli"
               title="Itxi"
             >
-              <CloseIcon />
+              <Icon name="x" className="study-session__close-icon" />
             </button>
           </div>
 
@@ -238,7 +232,7 @@ export const StudySessionPage: React.FC = () => {
 
               <div className="study-session__summary-grid">
                 <div className="study-session__summary-pill">
-                  <span className="study-session__summary-label">Racha</span>
+                  <span className="study-session__summary-label">Segida</span>
                   <span className="study-session__summary-value">{streakValue}</span>
                 </div>
                 <div className="study-session__summary-pill">
@@ -290,7 +284,7 @@ export const StudySessionPage: React.FC = () => {
             aria-label="Itxi eta hasierara itzuli"
             title="Itxi"
           >
-            <CloseIcon />
+            <Icon name="x" className="study-session__close-icon" />
           </button>
         </div>
 
@@ -352,4 +346,3 @@ export const StudySessionPage: React.FC = () => {
 };
 
 export default StudySessionPage;
-

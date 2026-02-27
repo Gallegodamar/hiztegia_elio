@@ -21,18 +21,12 @@ import {
   type GrammarStatsSummary,
   type GrammarUserSettings,
 } from '../../lib/grammarService';
+import { Icon } from '../ui/Icon';
 import LessonStep from './LessonStep';
 import PracticeStep from './PracticeStep';
 import ResultStep from './ResultStep';
 
 type WizardStep = 1 | 2 | 3;
-
-const CloseIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="study-session__close-icon">
-    <path d="M6 6l12 12" />
-    <path d="M18 6l-12 12" />
-  </svg>
-);
 
 const LEVELS: GrammarLevel[] = ['B1', 'B2', 'C1'];
 
@@ -126,19 +120,21 @@ export const GrammarScreen: React.FC = () => {
         fetchAttemptForAssignment(nextAssignment.id),
         fetchStats({ days: 7 }).catch(() => null),
       ]);
+      const safeAttempt =
+        nextAttempt && nextAttempt.lessonId === nextBundle.lesson.id ? nextAttempt : null;
 
       setSettingsState(nextSettings);
       setAssignment(nextAssignment);
       setBundle(nextBundle);
-      setExistingAttempt(nextAttempt);
+      setExistingAttempt(safeAttempt);
       setStats(nextStats);
       setSaveQueued(false);
 
-      if (nextAttempt?.completed) {
-        setAnswersMap(answersArrayToMap(nextAttempt.answers));
+      if (safeAttempt?.completed) {
+        setAnswersMap(answersArrayToMap(safeAttempt.answers));
         setStep(3);
         setQuestionIndex(Math.max(0, nextBundle.questions.length - 1));
-        setStartedAt(nextAttempt.startedAt ?? new Date().toISOString());
+        setStartedAt(safeAttempt.startedAt ?? new Date().toISOString());
         setSaveError(null);
         clearGrammarDraft(nextAssignment.id);
         return;
@@ -332,7 +328,7 @@ export const GrammarScreen: React.FC = () => {
               aria-label="Itxi"
               onClick={closeToHome}
             >
-              <CloseIcon />
+              <Icon name="x" className="study-session__close-icon" />
             </button>
           </div>
           <div className="study-session__center study-session__center--final">
@@ -346,9 +342,6 @@ export const GrammarScreen: React.FC = () => {
                   void loadGrammarFlow().finally(() => setIsLoading(false));
                 }}>
                   Berriz saiatu
-                </button>
-                <button type="button" className="btn-secondary study-session__primary-btn" onClick={closeToHome}>
-                  Itzuli
                 </button>
               </div>
             </section>
@@ -387,7 +380,7 @@ export const GrammarScreen: React.FC = () => {
             aria-label="Itxi"
             onClick={closeToHome}
           >
-            <CloseIcon />
+            <Icon name="x" className="study-session__close-icon" />
           </button>
         </div>
 
@@ -461,13 +454,6 @@ export const GrammarScreen: React.FC = () => {
           />
         ) : null}
 
-        {step !== 3 ? (
-          <div className="grammar-screen__bottom-nav">
-            <button type="button" className="btn-secondary study-session__primary-btn" onClick={closeToHome}>
-              Itzuli
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

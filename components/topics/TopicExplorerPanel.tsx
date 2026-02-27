@@ -4,6 +4,7 @@ import { TopicCategory, TopicDetail } from '../../appTypes';
 import { useTopic } from '../../hooks/useTopic';
 import { useTopics } from '../../hooks/useTopics';
 import { getDailyTopic, getTopicVisual } from '../../lib/topicDaily';
+import { Icon } from '../ui/Icon';
 
 type TopicExplorerPanelProps = {
   initialSlug?: string;
@@ -219,7 +220,11 @@ export const TopicExplorerPanel: React.FC<TopicExplorerPanelProps> = ({
             >
               <div className="topic-browser__daily-main">
                 <span className="topic-browser__daily-icon" aria-hidden="true">
-                  {dailyVisual?.icon ?? 'T'}
+                  <Icon
+                    name={dailyVisual?.icon ?? 'topics'}
+                    className="topic-browser__daily-icon-svg"
+                    size={20}
+                  />
                 </span>
                 <div className="topic-browser__daily-text">
                   <p className="topic-browser__daily-kicker">Gaurko Gaia</p>

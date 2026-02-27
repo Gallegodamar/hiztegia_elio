@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
 import { useFavoritesData } from '../../hooks/useFavoritesData';
 import { normalizeFavoriteWordKey, todayKey, FavoriteWord, SearchMode } from '../../lib/userFavorites';
 import { FavoritesStudyDeck } from './FavoritesStudyDeck';
+import { Icon } from '../ui/Icon';
 
 const dangerActionClass = (isDisabled: boolean): string =>
   `action-pill ${isDisabled ? 'action-pill--disabled' : 'action-pill--danger'}`;
@@ -11,12 +12,13 @@ const dangerActionClass = (isDisabled: boolean): string =>
 export const FavoritesPanel: React.FC = () => {
   const { username, showNotice } = useAppContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const favorites = useFavoritesData(username);
+  const isStudyMode = searchParams.get('study') === '1';
 
   const currentDay = todayKey();
   const [historyDate, setHistoryDate] = useState(() => currentDay);
   const [favoriteQuery, setFavoriteQuery] = useState('');
-  const [isStudyMode, setIsStudyMode] = useState(false);
 
   const allDays = useMemo(
     () =>
@@ -58,10 +60,9 @@ export const FavoritesPanel: React.FC = () => {
     if (!exists) setHistoryDate(allDays[0].date);
   }, [allDays, historyDate]);
 
-  React.useEffect(() => {
-    if (studyRows.length > 0) return;
-    if (isStudyMode) setIsStudyMode(false);
-  }, [isStudyMode, studyRows.length]);
+  const handleCloseStudyMode = () => {
+    navigate('/');
+  };
 
   const onStudyWord = (word: string, mode: SearchMode) => {
     const query = `?q=${encodeURIComponent(word.trim())}`;
@@ -99,23 +100,6 @@ export const FavoritesPanel: React.FC = () => {
                 >
                   Gaur
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsStudyMode((prev) => !prev)}
-                  disabled={favorites.isLoading || Boolean(favorites.error) || studyRows.length === 0}
-                  className={
-                    isStudyMode
-                      ? 'action-pill action-pill--accent'
-                      : `action-pill ${
-                          favorites.isLoading || Boolean(favorites.error) || studyRows.length === 0
-                            ? 'action-pill--disabled'
-                            : 'action-pill--neutral'
-                        }`
-                  }
-                  title="Gogokoak txartelekin berrikusi"
-                >
-                  {isStudyMode ? 'Txartelak itxi' : 'Txartelekin ikasi'}
-                </button>
               </div>
           </div>
         </section>
@@ -138,7 +122,7 @@ export const FavoritesPanel: React.FC = () => {
                 aria-label="Bilaketa garbitu"
                 title="Garbitu"
               >
-                x
+                <Icon name="x" size={16} />
               </button>
             ) : null}
           </div>
@@ -158,7 +142,7 @@ export const FavoritesPanel: React.FC = () => {
           <FavoritesStudyDeck
             entries={studyRows}
             username={username}
-            onClose={() => setIsStudyMode(false)}
+            onClose={handleCloseStudyMode}
           />
         ) : historyRows.length === 0 ? (
           <section className="surface-card surface-card--muted p-4 md:p-5">

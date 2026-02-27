@@ -7,7 +7,7 @@ import {
   removeOrganizerFavorite,
 } from '../../lib/supabaseRepo';
 import { useAppContext } from '../../contexts/AppContext';
-import { HeartIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 
 const normalizeText = (value: string): string =>
   value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -118,7 +118,7 @@ const DailyCard: React.FC<{
           className={`daily-feature-card__favorite ${isFavorite ? 'daily-feature-card__favorite--active' : ''}`}
           style={{ opacity: isPending ? 0.55 : 1 }}
         >
-          <HeartIcon filled={isFavorite} />
+          <Icon name="heart" filled={isFavorite} />
         </button>
       </div>
     </article>
@@ -160,15 +160,13 @@ const OrganizerCard: React.FC<{
           top: '0.45rem',
           right: '0.5rem',
           padding: '0.3rem',
-          cursor: isPending ? 'default' : 'pointer',
-          color: isFavorite ? '#ee88a8' : 'var(--muted-1)',
           lineHeight: 1,
           display: 'flex',
           alignItems: 'center',
           opacity: isPending ? 0.55 : 1,
         }}
       >
-        <HeartIcon filled={isFavorite} />
+        <Icon name="heart" filled={isFavorite} />
       </button>
       <p style={{ fontWeight: 700, color: 'var(--ink-0)', margin: 0, lineHeight: 1.3, fontSize: '0.95rem' }}>
         {antolatzaileak}
@@ -321,23 +319,11 @@ export const OrganizersPanel: React.FC = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}
       >
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          focusable="false"
-          style={{
-            width: '1rem',
-            height: '1rem',
-            flexShrink: 0,
-            color: 'var(--muted-1)',
-            fill: 'none',
-            stroke: 'currentColor',
-            strokeWidth: 2,
-          }}
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-4.4-4.4" />
-        </svg>
+        <Icon
+          name="search"
+          size={18}
+          className="text-slate-500"
+        />
         <input
           type="search"
           placeholder="Idatzi hitza edo aukeratu funtzio bat..."
@@ -370,7 +356,7 @@ export const OrganizersPanel: React.FC = () => {
               alignItems: 'center',
             }}
           >
-            x
+            <Icon name="x" size={16} />
           </button>
         ) : null}
       </div>
@@ -432,7 +418,11 @@ export const OrganizersPanel: React.FC = () => {
                     }}
                   >
                     {family.label}
-                    <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{isOpen ? '^' : 'v'}</span>
+                    <Icon
+                      name="chevronRight"
+                      size={13}
+                      className={isOpen ? 'rotate-90 transition-transform duration-200' : 'transition-transform duration-200'}
+                    />
                   </button>
                 );
               })}

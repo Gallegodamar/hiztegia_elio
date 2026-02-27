@@ -415,15 +415,6 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
     return `translate3d(${drag.x}px, 0, 0) rotate(${drag.x / 18}deg)`;
   })();
 
-  const helperHint =
-    drag.x > 18
-      ? 'Eskuinera: badakit'
-      : drag.x < -18
-        ? 'Ezkerrera: berrikusi'
-        : revealed
-          ? 'Irristatu baloratzeko edo sakatu berriz'
-          : 'Sakatu txartela iraulitzeko';
-
   const openNextBatch = () => {
     startBatch(memoryRef.current, batchNumber + 1);
   };
@@ -438,7 +429,7 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
       <section className="favorites-study">
         <div className="favorites-study__top" style={{ justifyContent: 'flex-end' }}>
           <button type="button" onClick={onClose} className="action-pill action-pill--neutral">
-            Zerrendara itzuli
+            Hasierara itzuli
           </button>
         </div>
 
@@ -558,9 +549,6 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
                           </div>
                           <div className="favorites-study__face-center">
                             <h4 className="favorites-study__word">{activeEntry.word}</h4>
-                            <p className="favorites-study__hidden-answer">
-                              Sakatu txartela erantzuna ikusteko
-                            </p>
                           </div>
                         </div>
 
@@ -590,20 +578,12 @@ export const FavoritesStudyDeck: React.FC<FavoritesStudyDeckProps> = ({
                                 </p>
                               ) : null}
                             </div>
-                            <p className="favorites-study__hidden-answer favorites-study__hidden-answer--soft">
-                              Sakatu berriz txartela aurkialdera itzultzeko
-                            </p>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="favorites-study__swipe-hint">
-                    <span className="favorites-study__swipe-hint-left">Ezkerrera: berrikusi</span>
-                    <span className="favorites-study__swipe-hint-center">{helperHint}</span>
-                    <span className="favorites-study__swipe-hint-right">Eskuinera: badakit</span>
-                  </div>
                 </div>
               </div>
             </div>

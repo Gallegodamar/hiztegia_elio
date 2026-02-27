@@ -410,7 +410,113 @@ export const getTodayAssignment = async (
     throw new Error('Ezin izan da gaurko gramatika saioa prestatu.');
   }
 
-  return parseAssignment(row);
+  const assignment = parseAssignment(row);
+  return ensureAssignmentHasActiveQuestions(assignment);
+};
+
+const hasActiveQuestionsForLesson = async (lessonId: string): Promise<boolean> => {
+  const trimmedLessonId = lessonId.trim();
+  if (!trimmedLessonId) return false;
+
+  const { count, error } = await supabase
+    .from('grammar_questions')
+    .select('id', { count: 'exact', head: true })
+    .eq('lesson_id', trimmedLessonId)
+    .eq('active', true);
+
+  if (error) {
+    throw new Error(errorMessageFromSupabase(error));
+  }
+
+  return Number(count ?? 0) > 0;
+};
+
+const pickFallbackLessonWithQuestions = async (
+  preferredLevel?: GrammarLevel
+): Promise<GrammarLesson | null> => {
+  const { data: questionRows, error: questionError } = await supabase
+    .from('grammar_questions')
+    .select('lesson_id')
+    .eq('active', true);
+
+  if (questionError) {
+    throw new Error(errorMessageFromSupabase(questionError));
+  }
+
+  const lessonIds = Array.from(
+    new Set(
+      ((questionRows ?? []) as Array<Record<string, unknown>>)
+        .map((row) => String(row.lesson_id ?? '').trim())
+        .filter(Boolean)
+    )
+  );
+
+  if (lessonIds.length === 0) {
+    return null;
+  }
+
+  const pickByLevel = async (level?: GrammarLevel): Promise<GrammarLesson | null> => {
+    let query = supabase
+      .from('grammar_lessons')
+      .select('*')
+      .eq('active', true)
+      .in('id', lessonIds)
+      .order('updated_at', { ascending: false })
+      .order('title', { ascending: true })
+      .limit(1);
+
+    if (level) {
+      query = query.eq('level', level);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      throw new Error(errorMessageFromSupabase(error));
+    }
+
+    const row = ((data ?? []) as Array<Record<string, unknown>>)[0];
+    return row ? parseLesson(row) : null;
+  };
+
+  if (preferredLevel) {
+    const sameLevel = await pickByLevel(preferredLevel);
+    if (sameLevel) return sameLevel;
+  }
+
+  return pickByLevel();
+};
+
+const ensureAssignmentHasActiveQuestions = async (
+  assignment: GrammarDailyAssignment
+): Promise<GrammarDailyAssignment> => {
+  const hasQuestions = await hasActiveQuestionsForLesson(assignment.lessonId);
+  if (hasQuestions) return assignment;
+
+  const fallbackLesson = await pickFallbackLessonWithQuestions(assignment.level);
+  if (!fallbackLesson) {
+    throw new Error('Ez dago galdera aktiborik duen gramatika ikasgairik.');
+  }
+
+  const { data, error } = await supabase
+    .from('grammar_daily_assignment')
+    .update({
+      lesson_id: fallbackLesson.id,
+      level: fallbackLesson.level,
+    })
+    .eq('id', assignment.id)
+    .select('*')
+    .single();
+
+  if (error) {
+    // Fallback lokala: assignment eguneratzea ezin bada, behintzat ikasgai baliozko bat erakutsi.
+    return {
+      ...assignment,
+      lessonId: fallbackLesson.id,
+      level: fallbackLesson.level,
+    };
+  }
+
+  return parseAssignment((data ?? {}) as Record<string, unknown>);
 };
 
 export const fetchLessonWithQuestions = async (lessonId: string): Promise<GrammarLessonBundle> => {
@@ -561,6 +667,8 @@ export const getTodayGrammarCardState = async (): Promise<GrammarCardState> => {
     fetchLessonWithQuestions(assignment.lessonId),
     fetchAttemptForAssignment(assignment.id),
   ]);
+  const attemptForCurrentLesson =
+    attempt && attempt.lessonId === bundle.lesson.id ? attempt : null;
 
   return {
     settings,
@@ -571,8 +679,8 @@ export const getTodayGrammarCardState = async (): Promise<GrammarCardState> => {
       estimatedMinutes: bundle.lesson.estimatedMinutes,
       level: bundle.lesson.level,
     },
-    completed: Boolean(attempt?.completed),
-    score: attempt ? attempt.score : null,
+    completed: Boolean(attemptForCurrentLesson?.completed),
+    score: attemptForCurrentLesson ? attemptForCurrentLesson.score : null,
   };
 };
 

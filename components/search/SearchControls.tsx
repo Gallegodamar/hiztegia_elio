@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchMode } from '../../lib/userFavorites';
-import { SearchIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 
 type SearchControlsProps = {
   searchMode: SearchMode;
@@ -34,7 +34,7 @@ export const SearchControls: React.FC<SearchControlsProps> = ({
       </button>
     </div>
     <div className="search-input-shell search-input-shell--leading">
-      <SearchIcon className="search-input-icon" />
+      <Icon name="search" className="search-input-icon" />
       <input
         type="text"
         value={searchTerm}
@@ -54,7 +54,7 @@ export const SearchControls: React.FC<SearchControlsProps> = ({
           aria-label="Bilaketa garbitu"
           title="Garbitu"
         >
-          x
+          <Icon name="x" size={16} />
         </button>
       ) : null}
     </div>

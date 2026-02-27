@@ -48,12 +48,12 @@ export const GrammarHomeCard: React.FC = () => {
           </p>
           <h3 className="home-hub__grammar-card-title">{title}</h3>
           <p className="helper-note home-hub__grammar-card-meta">
-            {duration} minutu · Maila: {level}
+            {duration} minutu | Maila: {level}
           </p>
         </div>
         {state?.completed ? (
           <span className="home-hub__grammar-badge home-hub__grammar-badge--done">
-            Eginda {state.score != null ? `${Math.round(state.score)}%` : '✅'}
+            Eginda {state.score != null ? `${Math.round(state.score)}%` : ''}
           </span>
         ) : (
           <span className="home-hub__grammar-badge">Gaur</span>
@@ -81,4 +81,3 @@ export const GrammarHomeCard: React.FC = () => {
 };
 
 export default GrammarHomeCard;
-

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { HeartIcon, HomeIcon, SearchIcon, StarIcon } from './Icons';
+import { Icon } from '../ui/Icon';
 
 type NavView = 'home' | 'search' | 'grammar' | 'progress';
 
@@ -30,7 +30,7 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
       ? 'home'
       : location.pathname === '/bilatu'
         ? 'search'
-      : location.pathname === '/gaurko-gramatika'
+      : location.pathname.startsWith('/gaurko-gramatika')
         ? 'grammar'
       : location.pathname === '/favoritos'
         ? 'progress'
@@ -55,24 +55,25 @@ export const BottomNav: React.FC<{ isAdminUser: boolean }> = ({ isAdminUser }) =
             >
               <span className="bottom-taskbar__button-content">
                 {view === 'home' ? (
-                  <HomeIcon
-                    filled={isActive}
+                  <Icon
+                    name="home"
                     className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--home"
                   />
                 ) : view === 'search' ? (
-                  <SearchIcon
-                    filled={isActive}
+                  <Icon
+                    name="search"
                     className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--search"
                   />
                 ) : view === 'grammar' ? (
-                  <StarIcon
-                    filled={isActive}
+                  <Icon
+                    name="grammar"
                     className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--grammar"
                   />
                 ) : (
-                  <HeartIcon
-                    filled={isActive}
+                  <Icon
+                    name="heart"
                     className="bottom-taskbar__nav-icon bottom-taskbar__nav-icon--favorites"
+                    filled={isActive}
                   />
                 )}
                 <span className="bottom-taskbar__label">{viewLabels[view]}</span>

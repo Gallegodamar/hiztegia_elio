@@ -12,6 +12,7 @@ import {
   type ProgressSummary as SupabaseProgressSummary,
   type QuestionRow as SupabaseQuestionRow,
 } from '../../lib/dailyService';
+import { trackReviewEvent } from '../../lib/homeStatsService';
 import {
   answerCurrentQuestion,
   advanceDailySession,
@@ -37,19 +38,13 @@ import {
   type StudyHistory,
   type StudySessionMode,
 } from '../../lib/dailySession';
+import { Icon } from '../ui/Icon';
 
 type ScreenRoute = 'intro' | 'question' | 'summary';
 type FeedbackTone = 'correct' | 'wrong';
 type SessionSource = 'local' | 'supabase';
 
 type SupabaseQuestionMeta = Pick<SupabaseQuestionRow, 'id' | 'type'>;
-
-const CloseIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="study-session__close-icon">
-    <path d="M6 6l12 12" />
-    <path d="M18 6l-12 12" />
-  </svg>
-);
 
 const AnswerOption: React.FC<{
   label: string;
@@ -273,7 +268,7 @@ const SessionHeader: React.FC<{
       aria-label="Itxi eta hasierara itzuli"
       title="Itxi"
     >
-      <CloseIcon />
+      <Icon name="x" className="study-session__close-icon" />
     </button>
   </div>
 );
@@ -582,6 +577,14 @@ export const DailyChallengePage: React.FC = () => {
         };
 
         persistSession(nextSession, 'supabase');
+        void trackReviewEvent({
+          word: currentQuestion.word,
+          wordIdHint: currentQuestion.wordId,
+          source: mode === 'review' ? 'review' : 'daily',
+          isCorrect: result.is_correct,
+        }).catch((error) => {
+          console.warn('[home-stats] review event tracking unavailable', error);
+        });
       } catch (error) {
         setSubmitError(
           error instanceof Error ? error.message : 'Ezin izan da erantzuna gorde. Saiatu berriro.'
@@ -594,6 +597,17 @@ export const DailyChallengePage: React.FC = () => {
 
     const nextSession = answerCurrentQuestion(session, option);
     persistSession(nextSession, 'local');
+    const recordedAnswer = nextSession.answers[currentQuestion.id];
+    if (recordedAnswer) {
+      void trackReviewEvent({
+        word: currentQuestion.word,
+        wordIdHint: currentQuestion.wordId,
+        source: mode === 'review' ? 'review' : 'daily',
+        isCorrect: recordedAnswer.isCorrect,
+      }).catch((error) => {
+        console.warn('[home-stats] review event tracking unavailable', error);
+      });
+    }
   };
 
   const handleNext = () => {
@@ -662,7 +676,7 @@ export const DailyChallengePage: React.FC = () => {
         <div className="study-session__surface">
           <SessionHeader
             title={mode === 'review' ? 'Errepasoa' : 'Gaurko 5 hitzak'}
-            progressLabel={isCompleted ? 'Eginda \u2705' : `${answeredCount}/${totalQuestions}`}
+            progressLabel={isCompleted ? 'Eginda' : `${answeredCount}/${totalQuestions}`}
             progressRatio={(Math.min(answeredCount, totalQuestions) / totalQuestions) * 100}
             onClose={handleBackHome}
           />
@@ -795,7 +809,7 @@ export const DailyChallengePage: React.FC = () => {
                   <span className="study-session__summary-value">{pendingCount}</span>
                 </div>
                 <div className="study-session__summary-pill">
-                  <span className="study-session__summary-label">Racha</span>
+                  <span className="study-session__summary-label">Segida</span>
                   <span className="study-session__summary-value">
                     {session.mode === 'review' ? streak.current : (session.streakAfter ?? streak.current)}
                   </span>
@@ -838,9 +852,19 @@ export const DailyChallengePage: React.FC = () => {
                     <span
                       aria-label={row.isCorrect ? 'Zuzena' : 'Okerra'}
                       title={row.isCorrect ? 'Zuzena' : 'Okerra'}
-                      style={{ fontWeight: 700, color: row.isCorrect ? '#047857' : '#b91c1c' }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: row.isCorrect ? '#047857' : '#b91c1c',
+                      }}
                     >
-                      {row.isCorrect ? '\u2705' : '\u274C'}
+                      <Icon
+                        name={row.isCorrect ? 'check' : 'x'}
+                        size={16}
+                        strokeWidth={2}
+                        label={row.isCorrect ? 'Zuzena' : 'Okerra'}
+                      />
                     </span>
                     <button
                       type="button"

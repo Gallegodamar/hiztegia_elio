@@ -1,5 +1,11 @@
 import React from 'react';
-import type { GrammarAttemptAnswer, GrammarLesson, GrammarQuestion, GrammarStatsSummary } from '../../lib/grammarService';
+import type {
+  GrammarAttemptAnswer,
+  GrammarLesson,
+  GrammarQuestion,
+  GrammarStatsSummary,
+} from '../../lib/grammarService';
+import { Icon } from '../ui/Icon';
 
 type ResultStepProps = {
   lesson: GrammarLesson;
@@ -44,9 +50,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
     <section className="study-session__card study-session__card--final">
       <p className="study-session__eyebrow">Emaitzak</p>
       <h2 className="study-session__word">{Math.round(score)}%</h2>
-      <p className="study-session__question study-session__question--muted">
-        {lesson.title}
-      </p>
+      <p className="study-session__question study-session__question--muted">{lesson.title}</p>
 
       <div className="study-session__summary-grid" style={{ marginTop: '0.85rem' }}>
         <div className="study-session__summary-pill">
@@ -98,7 +102,23 @@ export const ResultStep: React.FC<ResultStepProps> = ({
                 <div>
                   <p className="grammar-screen__result-prompt">{question.prompt}</p>
                   <p className="grammar-screen__result-meta">
-                    {answer?.isCorrect ? '✅ Zuzena' : '❌ Okerra'} · {selectedOption || '-'}
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.28rem',
+                      }}
+                    >
+                      <Icon
+                        name={answer?.isCorrect ? 'check' : 'x'}
+                        size={14}
+                        strokeWidth={2}
+                        className={answer?.isCorrect ? 'text-emerald-700' : 'text-red-700'}
+                      />
+                      {answer?.isCorrect ? 'Zuzena' : 'Okerra'}
+                    </span>
+                    {' | '}
+                    {selectedOption || '-'}
                   </p>
                   {!answer?.isCorrect ? (
                     <p className="grammar-screen__result-meta grammar-screen__result-meta--correct">
@@ -119,19 +139,27 @@ export const ResultStep: React.FC<ResultStepProps> = ({
           Azken egunak
         </p>
         <p className="helper-note" style={{ margin: '0.35rem 0 0' }}>
-          {stats.completedCount} saio · batez besteko nota {Math.round(stats.avgScore)}%
+          {stats.completedCount} saio | batez besteko nota {Math.round(stats.avgScore)}%
         </p>
       </section>
     ) : null}
 
     <div className="study-session__footer-actions" style={{ display: 'grid', gap: '0.5rem' }}>
       {saveError && onRetrySave ? (
-        <button type="button" className="btn-secondary study-session__primary-btn" onClick={onRetrySave}>
+        <button
+          type="button"
+          className="btn-secondary study-session__primary-btn"
+          onClick={onRetrySave}
+        >
           Berriro gorde
         </button>
       ) : null}
       {onBackToLesson ? (
-        <button type="button" className="btn-secondary study-session__primary-btn" onClick={onBackToLesson}>
+        <button
+          type="button"
+          className="btn-secondary study-session__primary-btn"
+          onClick={onBackToLesson}
+        >
           Azalpena berrikusi
         </button>
       ) : null}
@@ -143,4 +171,3 @@ export const ResultStep: React.FC<ResultStepProps> = ({
 );
 
 export default ResultStep;
-

@@ -6,7 +6,7 @@ import {
   fetchDailyMeaning,
   lookupDictionaryMeaning,
 } from '../../lib/supabaseRepo';
-import { HeartIcon } from '../layout/Icons';
+import { Icon } from '../ui/Icon';
 
 type DailyWordCardProps = {
   mode: 'meaning' | 'synonyms';
@@ -121,7 +121,8 @@ export const DailyWordCard: React.FC<DailyWordCardProps> = ({
                 className={`daily-feature-card__favorite ${savedToday ? 'daily-feature-card__favorite--active' : ''}`}
                 style={{ opacity: savingToday ? 0.5 : 1 }}
               >
-                <HeartIcon
+                <Icon
+                  name="star"
                   filled={savedToday}
                   className={`bottom-taskbar__icon ${savedToday ? 'bottom-taskbar__icon--favorites' : ''}`}
                 />

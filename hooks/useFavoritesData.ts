@@ -16,6 +16,7 @@ import {
   todayKey,
 } from '../lib/userFavorites';
 import { DifficultyLevel } from '../types';
+import { trackFavoriteAdded, trackFavoriteRemoved } from '../lib/homeStatsService';
 
 export type SaveFavoriteParams = {
   word: string;
@@ -113,6 +114,12 @@ export const useFavoritesData = (username: string): UseFavoritesDataResult => {
         return 'Ezin izan da gogokoa Supabasen gorde.';
       }
       if (!result.data) return 'Ezin izan da gogokoa Supabasen gorde.';
+      void trackFavoriteAdded({
+        word,
+        level: params.level ?? null,
+      }).catch((error) => {
+        console.warn('[home-stats] favorite add tracking unavailable', error);
+      });
       return `"${word}" gogokoetan gorde da.`;
     },
     [favoritesByDate, currentDay, saveMutation, username]
@@ -131,6 +138,9 @@ export const useFavoritesData = (username: string): UseFavoritesDataResult => {
         return 'Ezin izan da gogokoa ezabatu.';
       }
       if (!result.data?.deleted) return 'Ez da ezabatzeko gogokoa aurkitu.';
+      void trackFavoriteRemoved({ word: favorite.word }).catch((error) => {
+        console.warn('[home-stats] favorite remove tracking unavailable', error);
+      });
       return `"${favorite.word}" gogokoetatik ezabatu da.`;
     },
     [deleteMutation, username]
