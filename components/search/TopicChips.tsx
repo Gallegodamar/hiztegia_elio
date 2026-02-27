@@ -56,12 +56,17 @@ const HomeStatsChart: React.FC<{ series: HomeStatsPoint[] }> = ({ series }) => {
         aria-label="Azken 7 egunetako jarduera"
       >
         <defs>
-          <linearGradient id="homeReviewsBar" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--home-chart-reviews-start)" />
-            <stop offset="100%" stopColor="var(--home-chart-reviews-end)" />
+          <linearGradient id="homeReviewsBarNeutral" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--home-chart-reviews-neutral-start)" />
+            <stop offset="100%" stopColor="var(--home-chart-reviews-neutral-end)" />
+          </linearGradient>
+          <linearGradient id="homeReviewsBarActive" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--home-chart-reviews-active-start)" />
+            <stop offset="100%" stopColor="var(--home-chart-reviews-active-end)" />
           </linearGradient>
         </defs>
         {safeSeries.map((point, index) => {
+          const isActiveDay = index === safeSeries.length - 1;
           const x = index * slotWidth + (slotWidth - barWidth) / 2;
           const barHeight = Math.max(
             point.reviews > 0 ? 4 : 0,
@@ -78,8 +83,8 @@ const HomeStatsChart: React.FC<{ series: HomeStatsPoint[] }> = ({ series }) => {
                 width={barWidth}
                 height={barHeight}
                 rx={4}
-                fill="url(#homeReviewsBar)"
-                opacity={0.95}
+                fill={isActiveDay ? 'url(#homeReviewsBarActive)' : 'url(#homeReviewsBarNeutral)'}
+                opacity={isActiveDay ? 0.98 : 0.84}
               />
               <circle
                 cx={x + barWidth / 2}
@@ -322,7 +327,11 @@ export const TopicChips: React.FC = () => {
           onClick={() => navigate('/daily?mode=review')}
           className="btn-secondary btn-secondary--compact home-hasiera__quick-btn"
         >
-          <Icon name="refresh" className="home-hasiera__quick-btn-icon" size={18} />
+          <Icon
+            name="refresh"
+            className="home-hasiera__quick-btn-icon home-hasiera__quick-btn-icon--review"
+            size={18}
+          />
           Errepasatzeko {reviewQuickCount} hitz
         </button>
         <button
@@ -330,7 +339,11 @@ export const TopicChips: React.FC = () => {
           onClick={() => navigate('/azken-akatsak')}
           className="btn-secondary btn-secondary--compact home-hasiera__quick-btn"
         >
-          <Icon name="alert" className="home-hasiera__quick-btn-icon" size={18} />
+          <Icon
+            name="alert"
+            className="home-hasiera__quick-btn-icon home-hasiera__quick-btn-icon--warning"
+            size={18}
+          />
           Azken akatsak{recentMistakesCount > 0 ? ` (${recentMistakesCount})` : ''}
         </button>
       </div>
@@ -348,19 +361,19 @@ export const TopicChips: React.FC = () => {
         </div>
 
         <div className="home-hasiera__stats-grid">
-          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--accent">
+          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--success">
             <p className="home-hasiera__mini-stat-label">SEGIDA</p>
             <p className="home-hasiera__mini-stat-value">{streakDays}</p>
           </article>
-          <article className="home-hasiera__mini-stat">
+          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--brand">
             <p className="home-hasiera__mini-stat-label">HITZ IKASIAK</p>
             <p className="home-hasiera__mini-stat-value">{learnedWordsCount}</p>
           </article>
-          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--soft">
+          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--level">
             <p className="home-hasiera__mini-stat-label">MAILA</p>
             <p className="home-hasiera__mini-stat-value">{userLevel}</p>
           </article>
-          <article className="home-hasiera__mini-stat">
+          <article className="home-hasiera__mini-stat home-hasiera__mini-stat--favorite">
             <p className="home-hasiera__mini-stat-label">GOGOKOAK</p>
             <p className="home-hasiera__mini-stat-value">{favoritesCount}</p>
           </article>
