@@ -42,8 +42,9 @@ Exekutatu SQL editorrean:
 
 4. Eguneko gramatika (micro-lecciones)
    - `supabase/migrations/20260226_grammar_daily_module.sql`
-   - `supabase/seed_grammar_lessons.sql` (edo `supabase/seed.sql`)
-   - Honek 7 micro-lección + galderak sartzen ditu (`grammar_lessons`, `grammar_questions`)
+   - `supabase/migrations/20260227_grammar_lessons_add_21_json.sql` (18 ikasgai berriak)
+   - `supabase/seed_grammar_lessons.sql` / `supabase/seed.sql` (oinarrizko 7 ikasgaiak)
+   - `supabase/seed_grammar_lessons_21.sql` (21 lecciones.json fitxategitik sortutako seed osagarria, 18 ikasgai)
 
 ## Eguneko Gramatika setup (quick start)
 
@@ -52,6 +53,7 @@ Exekutatu SQL editorrean:
    - `VITE_SUPABASE_ANON_KEY=...`
 2. Supabase SQL Editorrean exekutatu:
    - `supabase/migrations/20260226_grammar_daily_module.sql`
+   - `supabase/migrations/20260227_grammar_lessons_add_21_json.sql`
    - `supabase/seed.sql` (edo `supabase/seed_grammar_lessons.sql`)
 3. Erabiltzaile batekin login egin (Supabase Auth)
 4. App-a abiatu:
